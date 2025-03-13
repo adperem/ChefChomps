@@ -1,6 +1,6 @@
 package com.example.chefchomps.model
 
-data class Receta(
+data class Receip(
     val id: Int,
     val title: String,
     val image: String,
@@ -36,7 +36,7 @@ data class Receta(
     val whole30: Boolean,
     val weightWatcherSmartPoints: Int,
     val dishTypes: List<String>,
-    val extendedIngredients: List<Ingrediente>,
+    val extendedIngredients: List<Ingredient>,
     val summary: String,
     val winePairing: WinePairing
 

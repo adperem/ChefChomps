@@ -1,9 +1,21 @@
+// build.gradle.kts
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
 }
 
+// Cargar local.properties
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) {
+        load(file.inputStream())
+    }
+}
+
+// Exponer apiKey como BuildConfig field
 android {
     namespace = "com.example.chefchomps"
     compileSdk = 35
@@ -16,6 +28,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Añadir apiKey a BuildConfig
+        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("apiKey") ?: "default_key"}\"")
     }
 
     buildTypes {
@@ -36,11 +51,11 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true // Asegúrate de que BuildConfig esté habilitado
     }
 }
 
 dependencies {
-
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)

@@ -1,4 +1,4 @@
-package chefchomps.UI
+package com.example.chefchomps.ui
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity

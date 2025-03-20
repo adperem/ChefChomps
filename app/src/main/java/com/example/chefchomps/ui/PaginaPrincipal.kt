@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,6 +34,7 @@ import androidx.compose.ui.unit.em
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe
+import kotlinx.coroutines.runBlocking
 
 class PaginaPrincipal :ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,6 +55,7 @@ class PaginaPrincipal :ComponentActivity(){
     @Composable
     fun Welcome(modifier:Modifier=Modifier,
                 uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal(),){
+        runBlocking{uiState.update()}
         Scaffold(
             topBar = {
                 Row(verticalAlignment=Alignment.CenterVertically){
@@ -67,7 +70,9 @@ class PaginaPrincipal :ComponentActivity(){
             LazyColumn(modifier=modifier
                 .padding(innerPadding)
                 .fillMaxWidth()) {
-
+                items(uiState.getlist()){
+                    aux->Text(text=aux.title)
+                }
             }
 
 

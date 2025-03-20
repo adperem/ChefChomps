@@ -50,9 +50,7 @@ class PaginaPrincipal :ComponentActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            Surface(modifier=Modifier.fillMaxSize()){
             Welcome();
-            }
         }
         }
     /**

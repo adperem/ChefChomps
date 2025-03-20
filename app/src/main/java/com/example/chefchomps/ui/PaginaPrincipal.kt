@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import com.example.chefchomps.R
+import com.example.chefchomps.model.Recipe
 
 class PaginaPrincipal :ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,6 +51,7 @@ class PaginaPrincipal :ComponentActivity(){
     @Preview
     @Composable
     fun Welcome(modifier:Modifier=Modifier ){
+        val lrecipe:List<Recipe>
         Scaffold(
             topBar = {
                 Row(verticalAlignment=Alignment.CenterVertically){

@@ -18,18 +18,21 @@ import java.util.Properties
 
 class ApiCLient {
 
+    companion object {
+
     private val BASE_URL = "https://api.spoonacular.com/" // Cambia esto según tu API
     private val API_KEY: String by lazy {
         val properties = Properties()
         val localPropertiesFile = File("../local.properties") // Ruta relativa desde app/
         if (localPropertiesFile.exists()) {
             properties.load(localPropertiesFile.inputStream())
-            properties.getProperty("apiKey") ?: throw IllegalStateException("API key no encontrada en local.properties")
+            properties.getProperty("apiKey")
+                ?: throw IllegalStateException("API key no encontrada en local.properties")
         } else {
             throw IllegalStateException("local.properties no encontrado")
         }
     }
-    
+
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()
             .baseUrl(BASE_URL)
@@ -58,7 +61,8 @@ class ApiCLient {
 
     suspend fun findRecipesByIngredients(ingredients: List<String>): Result<List<Recipe>> {
         return try {
-            val ingredientsQuery = ingredients.joinToString(",") // Convierte la lista en "carrots,tomatoes"
+            val ingredientsQuery =
+                ingredients.joinToString(",") // Convierte la lista en "carrots,tomatoes"
             val response = apiService.findRecipesByIngredients(
                 apiKey = API_KEY,
                 ingredients = ingredientsQuery,
@@ -106,6 +110,7 @@ class ApiCLient {
             Result.failure(e)
         }
     }
+}
 
 
 }

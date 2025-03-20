@@ -1,4 +1,5 @@
 // build.gradle.kts
+import java.io.FileInputStream
 import java.util.Properties
 
 plugins {
@@ -33,9 +34,18 @@ android {
         buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("apiKey") ?: "default_key"}\"")
     }
 
+    // Cargar local.properties
+    val properties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        properties.load(FileInputStream(localPropertiesFile))
+    }
+    val apiKey = properties.getProperty("apiKey") ?: "default_api_key" // Valor por defecto si no está en local.properties
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            buildConfigField("String", "API_KEY", "\"$apiKey\"")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -71,4 +81,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+
+    // Retrofit y dependencias relacionadas
+    implementation(libs.retrofit)
+    implementation(libs.converter.gson)
+    implementation(libs.gson)
+
 }

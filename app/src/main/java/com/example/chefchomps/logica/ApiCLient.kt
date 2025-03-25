@@ -22,8 +22,11 @@ class ApiCLient {
 
     private val BASE_URL = "https://api.spoonacular.com/" // Cambia esto según tu API
     private val API_KEY: String by lazy {
+
         val properties = Properties()
-        val localPropertiesFile = File("../local.properties") // Ruta relativa desde app/
+        val localPropertiesFile = File("local.properties") // Ruta relativa desde app
+
+        println(localPropertiesFile.absolutePath)
         if (localPropertiesFile.exists()) {
             properties.load(localPropertiesFile.inputStream())
             properties.getProperty("apiKey")

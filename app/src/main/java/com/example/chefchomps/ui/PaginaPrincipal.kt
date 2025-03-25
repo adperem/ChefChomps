@@ -74,7 +74,10 @@ class PaginaPrincipal :ComponentActivity(){
                 .padding(innerPadding)
                 .fillMaxWidth()) {
                 items(uiState.getlist()){
-                    aux->Row{
+                    aux->Row(
+                        modifier = modifier
+                            .fillMaxWidth()
+                    ){
                         Text(text=aux.title)
                         AsyncImage(model=aux.image,
                             contentDescription = "")

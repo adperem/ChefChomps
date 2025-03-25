@@ -31,7 +31,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Añadir apiKey a BuildConfig
-        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("apiKey") ?: "default_key"}\"")
+        buildConfigField("String", "API_KEY", "\"${project.findProperty("apiKey")}\"")
     }
 
     // Cargar local.properties

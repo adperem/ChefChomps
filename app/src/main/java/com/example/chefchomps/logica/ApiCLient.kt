@@ -1,5 +1,6 @@
 package com.example.chefchomps.logica
 
+import com.example.chefchomps.BuildConfig
 import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.WinePairing
@@ -19,16 +20,7 @@ import java.util.Properties
 class ApiCLient {
 
     private val BASE_URL = "https://api.spoonacular.com/"
-    private val API_KEY: String by lazy {
-        val properties = Properties()
-        val localPropertiesFile = File("../local.properties") // Ruta relativa desde app/
-        if (localPropertiesFile.exists()) {
-            properties.load(localPropertiesFile.inputStream())
-            properties.getProperty("apiKey") ?: throw IllegalStateException("API key no encontrada en local.properties")
-        } else {
-            throw IllegalStateException("local.properties no encontrado")
-        }
-    }
+    private val API_KEY = BuildConfig.API_KEY
     
     private val retrofit: Retrofit by lazy {
         Retrofit.Builder()

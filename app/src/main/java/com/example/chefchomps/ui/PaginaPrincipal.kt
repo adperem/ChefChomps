@@ -31,6 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import coil3.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe
@@ -55,7 +56,9 @@ class PaginaPrincipal :ComponentActivity(){
     @Composable
     fun Welcome(modifier:Modifier=Modifier,
                 uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal(),){
-        runBlocking{uiState.update()}
+        runBlocking{
+            uiState.update()
+        }
         Scaffold(
             topBar = {
                 Row(verticalAlignment=Alignment.CenterVertically){
@@ -71,7 +74,11 @@ class PaginaPrincipal :ComponentActivity(){
                 .padding(innerPadding)
                 .fillMaxWidth()) {
                 items(uiState.getlist()){
-                    aux->Text(text=aux.title)
+                    aux->Row{
+                        Text(text=aux.title)
+                        AsyncImage(model=aux.image,
+                            contentDescription = "")
+                    }
                 }
             }
 

@@ -1,8 +1,11 @@
 package com.example.chefchomps.logica
 
 import com.example.chefchomps.BuildConfig
+import com.example.chefchomps.model.Equipment
 import com.example.chefchomps.model.Ingredient
+import com.example.chefchomps.model.Instruction
 import com.example.chefchomps.model.Recipe
+import com.example.chefchomps.model.Step
 import com.example.chefchomps.model.WinePairing
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
@@ -14,8 +17,9 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.lang.reflect.Type
 import kotlinx.coroutines.awaitAll
-import java.io.File
-import java.util.Properties
+import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+
 
 class ApiCLient {
     companion object {
@@ -23,10 +27,19 @@ class ApiCLient {
         private val BASE_URL = "https://api.spoonacular.com/"
         private val API_KEY = BuildConfig.API_KEY
 
+        val logging = HttpLoggingInterceptor().apply {
+            level = HttpLoggingInterceptor.Level.BODY
+        }
+
+        val client = OkHttpClient.Builder()
+            .addInterceptor(logging)
+            .build()
+
         private val retrofit: Retrofit by lazy {
             Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
+                .client(client) // Agregar el cliente con logging
                 .build()
         }
 
@@ -109,13 +122,25 @@ class ApiCLient {
 class RecipeDeserializer : JsonDeserializer<Recipe> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Recipe {
         val jsonObject = json.asJsonObject
-        val analyzedInstructions = jsonObject.getAsJsonArray("analyzedInstructions")
-            ?.flatMap { instruction ->
-                instruction.asJsonObject.getAsJsonArray("steps")
-                    ?.map { it.asJsonObject.get("step").asString } ?: emptyList()
-            } ?: emptyList()
 
-        // Asumimos valores por defecto para campos faltantes como winePairing y otros
+        // Deserializar analyzedInstructions como una lista de Instruction
+        val analyzedInstructions = jsonObject.getAsJsonArray("analyzedInstructions")?.map { instructionElement ->
+            val instructionObject = instructionElement.asJsonObject
+            val steps = instructionObject.getAsJsonArray("steps")?.map { stepElement ->
+                val stepObject = stepElement.asJsonObject
+                Step(
+                    number = stepObject.get("number").asInt,
+                    step = stepObject.get("step").asString,
+                    ingredients = context.deserialize(stepObject.get("ingredients"), object : TypeToken<List<Ingredient>>() {}.type),
+                    equipment = context.deserialize(stepObject.get("equipment"), object : TypeToken<List<Equipment>>() {}.type)
+                )
+            } ?: emptyList()
+            Instruction(
+                name = instructionObject.get("name").asString,
+                steps = steps
+            )
+        } ?: emptyList()
+
         return Recipe(
             id = jsonObject.get("id").asInt,
             title = jsonObject.get("title").asString,
@@ -141,7 +166,7 @@ class RecipeDeserializer : JsonDeserializer<Recipe> {
             gaps = jsonObject.get("gaps").asString,
             glutenFree = jsonObject.get("glutenFree").asBoolean,
             instructions = jsonObject.get("instructions").asString,
-            ketogenic = jsonObject.get("ketogenic")?.asBoolean ?: false, // Valor por defecto
+            ketogenic = jsonObject.get("ketogenic")?.asBoolean ?: false,
             lowFodmap = jsonObject.get("lowFodmap").asBoolean,
             occasions = jsonObject.getAsJsonArray("occasions")?.map { it.asString } ?: emptyList(),
             sustainable = jsonObject.get("sustainable").asBoolean,
@@ -149,12 +174,12 @@ class RecipeDeserializer : JsonDeserializer<Recipe> {
             vegetarian = jsonObject.get("vegetarian").asBoolean,
             veryHealthy = jsonObject.get("veryHealthy").asBoolean,
             veryPopular = jsonObject.get("veryPopular").asBoolean,
-            whole30 = jsonObject.get("whole30")?.asBoolean ?: false, // Valor por defecto
+            whole30 = jsonObject.get("whole30")?.asBoolean ?: false,
             weightWatcherSmartPoints = jsonObject.get("weightWatcherSmartPoints").asInt,
             dishTypes = jsonObject.getAsJsonArray("dishTypes")?.map { it.asString } ?: emptyList(),
             extendedIngredients = context.deserialize(jsonObject.get("extendedIngredients"), object : TypeToken<List<Ingredient>>() {}.type),
             summary = jsonObject.get("summary").asString,
-            winePairing = WinePairing() // Valor por defecto
+            winePairing = WinePairing()
         )
     }
 }

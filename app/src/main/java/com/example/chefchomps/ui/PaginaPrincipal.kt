@@ -6,11 +6,13 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,7 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-import coil3.compose.AsyncImage
+import coil.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe
@@ -77,11 +79,16 @@ class PaginaPrincipal :ComponentActivity(){
                     aux->Row(
                         modifier = modifier
                             .fillMaxWidth()
-                    ){
-                        Text(text=aux.title)
+                    ){Box(modifier = Modifier.height(200.dp)
+                    .weight(1f)){
+                        Text(text=aux.title,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.height(200.dp)
+                            )}
                         AsyncImage(model=aux.image,
                             contentDescription = "Imagen de la receta",
-                            modifier = Modifier.size(200.dp),
+                            modifier = Modifier.height(200.dp)
+                                .weight(1f),
                             onLoading = { println("Cargando imagen...") },
                             onSuccess = { println("Imagen cargada con éxito") },
                             onError = { println("Error al cargar la imagen: ${it.result.throwable}") })

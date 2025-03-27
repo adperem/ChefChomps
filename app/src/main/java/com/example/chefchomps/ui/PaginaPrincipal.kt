@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -78,15 +77,15 @@ class PaginaPrincipal :ComponentActivity(){
                     aux->Row(
                         modifier = modifier
                             .fillMaxWidth()
-
                     ){
-                        Text(text=aux.title,
-                                modifier = Modifier
-                                .height(200.dp))
+                        Text(text=aux.title)
                         AsyncImage(model=aux.image,
-                            contentDescription = "",
-                            modifier = Modifier
-                                .height(200.dp))
+                            contentDescription = "Imagen de la receta",
+                            modifier = Modifier.size(200.dp),
+                            onLoading = { println("Cargando imagen...") },
+                            onSuccess = { println("Imagen cargada con éxito") },
+                            onError = { println("Error al cargar la imagen: ${it.result.throwable}") })
+
                     }
                 }
             }

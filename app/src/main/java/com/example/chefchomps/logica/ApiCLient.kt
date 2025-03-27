@@ -18,88 +18,92 @@ import java.io.File
 import java.util.Properties
 
 class ApiCLient {
+    companion object {
 
-    private val BASE_URL = "https://api.spoonacular.com/"
-    private val API_KEY = BuildConfig.API_KEY
-    
-    private val retrofit: Retrofit by lazy {
-        Retrofit.Builder()
-            .baseUrl(BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-    }
+        private val BASE_URL = "https://api.spoonacular.com/"
+        private val API_KEY = BuildConfig.API_KEY
 
-    private val apiService: ApiService by lazy {
-        retrofit.create(ApiService::class.java)
-    }
-
-    // Nuevo metodo para receta aleatoria
-    suspend fun getRandomRecipe(): Result<Recipe> {
-        return try {
-            val response = apiService.getRandomRecipe(API_KEY)
-            if (response.isSuccessful) {
-                val recipes = response.body()?.recipes ?: emptyList()
-                Result.success(recipes.firstOrNull() ?: throw Exception("No recipe returned"))
-            } else {
-                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+        private val retrofit: Retrofit by lazy {
+            Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build()
         }
-    }
 
-    suspend fun findRecipesByIngredients(ingredients: List<String>): Result<List<Recipe>> {
-        return try {
-            val ingredientsQuery = ingredients.joinToString(",") // Convierte la lista en "carrots,tomatoes"
-            val response = apiService.findRecipesByIngredients(
-                apiKey = API_KEY,
-                ingredients = ingredientsQuery,
-                number = 10, // Valor fijo como en tu ejemplo
-                ignorePantry = false // Valor fijo como en tu ejemplo
-            )
-            if (response.isSuccessful) {
-                Result.success(response.body() ?: emptyList())
-            } else {
-                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
+        private val apiService: ApiService by lazy {
+            retrofit.create(ApiService::class.java)
         }
-    }
 
-    suspend fun getRecipeInformation(id: Int): Result<Recipe> {
-        return try {
-            val response = apiService.getRecipeInformation(id, API_KEY)
-            if (response.isSuccessful) {
-                Result.success(response.body() ?: throw Exception("No recipe information returned"))
-            } else {
-                Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
-            }
-        } catch (e: Exception) {
-            Result.failure(e)
-        }
-    }
-
-    suspend fun autocompleteRecipes(query: String): Result<List<Recipe>> = coroutineScope {
-        return@coroutineScope try {
-            val autocompleteResponse = apiService.autocompleteRecipes(API_KEY, query)
-            if (autocompleteResponse.isSuccessful) {
-                val suggestions = autocompleteResponse.body() ?: emptyList()
-                val detailedRecipes = suggestions.map { suggestion ->
-                    async { getRecipeInformation(suggestion.id) }
-                }.awaitAll().mapNotNull { result ->
-                    result.getOrNull() // Solo incluir recetas obtenidas con éxito
+        // Nuevo metodo para receta aleatoria
+        suspend fun getRandomRecipe(): Result<Recipe> {
+            return try {
+                val response = apiService.getRandomRecipe(API_KEY)
+                if (response.isSuccessful) {
+                    val recipes = response.body()?.recipes ?: emptyList()
+                    Result.success(recipes.firstOrNull() ?: throw Exception("No recipe returned"))
+                } else {
+                    Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
                 }
-                Result.success(detailedRecipes)
-            } else {
-                Result.failure(Exception("Error en autocompletado: ${autocompleteResponse.code()} - ${autocompleteResponse.message()}"))
+            } catch (e: Exception) {
+                Result.failure(e)
             }
-        } catch (e: Exception) {
-            Result.failure(e)
         }
+
+        suspend fun findRecipesByIngredients(ingredients: List<String>): Result<List<Recipe>> {
+            return try {
+                val ingredientsQuery =
+                    ingredients.joinToString(",") // Convierte la lista en "carrots,tomatoes"
+                val response = apiService.findRecipesByIngredients(
+                    apiKey = API_KEY,
+                    ingredients = ingredientsQuery,
+                    number = 10, // Valor fijo como en tu ejemplo
+                    ignorePantry = false // Valor fijo como en tu ejemplo
+                )
+                if (response.isSuccessful) {
+                    Result.success(response.body() ?: emptyList())
+                } else {
+                    Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+        suspend fun getRecipeInformation(id: Int): Result<Recipe> {
+            return try {
+                val response = apiService.getRecipeInformation(id, API_KEY)
+                if (response.isSuccessful) {
+                    Result.success(
+                        response.body() ?: throw Exception("No recipe information returned")
+                    )
+                } else {
+                    Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
+        suspend fun autocompleteRecipes(query: String): Result<List<Recipe>> = coroutineScope {
+            return@coroutineScope try {
+                val autocompleteResponse = apiService.autocompleteRecipes(API_KEY, query)
+                if (autocompleteResponse.isSuccessful) {
+                    val suggestions = autocompleteResponse.body() ?: emptyList()
+                    val detailedRecipes = suggestions.map { suggestion ->
+                        async { getRecipeInformation(suggestion.id) }
+                    }.awaitAll().mapNotNull { result ->
+                        result.getOrNull() // Solo incluir recetas obtenidas con éxito
+                    }
+                    Result.success(detailedRecipes)
+                } else {
+                    Result.failure(Exception("Error en autocompletado: ${autocompleteResponse.code()} - ${autocompleteResponse.message()}"))
+                }
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
+        }
+
     }
-
-
 }
 
 class RecipeDeserializer : JsonDeserializer<Recipe> {

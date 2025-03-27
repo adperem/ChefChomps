@@ -114,7 +114,7 @@ class RecipeDeserializer : JsonDeserializer<Recipe> {
                 instruction.asJsonObject.getAsJsonArray("steps")
                     ?.map { it.asJsonObject.get("step").asString } ?: emptyList()
             } ?: emptyList()
-
+        println(json)
         // Asumimos valores por defecto para campos faltantes como winePairing y otros
         return Recipe(
             id = jsonObject.get("id").asInt,

@@ -31,8 +31,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
-//import coil3.compose.AsyncImage
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe

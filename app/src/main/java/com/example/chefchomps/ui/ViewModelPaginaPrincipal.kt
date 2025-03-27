@@ -23,7 +23,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
             currentstate:UIPrincipalPageData->
             val lrecip:MutableList<Recipe> =ArrayList()
             lrecip.addAll(currentstate.lrecipe)
-            for (i in 0..1){
+            for (i in 0..0){
                 val rec : Result<Recipe> = ApiCLient.getRandomRecipe();
                 if(rec.isSuccess){
                     rec.getOrNull()?.let { it1 -> lrecip.add(it1) }

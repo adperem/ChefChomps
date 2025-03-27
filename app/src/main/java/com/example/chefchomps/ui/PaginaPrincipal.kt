@@ -77,6 +77,7 @@ class PaginaPrincipal :ComponentActivity(){
                     aux->Row(
                         modifier = modifier
                             .fillMaxWidth()
+
                     ){
                         Text(text=aux.title)
                         AsyncImage(model=aux.image,

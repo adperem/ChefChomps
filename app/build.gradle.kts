@@ -92,4 +92,7 @@ dependencies {
     implementation(libs.logging.interceptor)
 
 
+    implementation("com.google.firebase:firebase-auth-ktx:22.1.2")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.9.1")
+
 }

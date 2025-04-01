@@ -11,7 +11,7 @@ interface ApiService {
     @GET("recipes/random")
     suspend fun getRandomRecipe(
         @Query("apiKey") apiKey: String,
-        @Query("number") number: Int = 1 // Por defecto 1, según tu ejemplo
+        @Query("number") number: Int = 10 // Por defecto 10, según tu ejemplo
     ): Response<RandomRecipeResponse>
 
     @GET("recipes/findByIngredients")

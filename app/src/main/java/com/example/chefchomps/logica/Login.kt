@@ -60,7 +60,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val success = firebaseHelper.registerUser(email, password, "Juan", "Pérez")
+                    val success = firebaseHelper.registerUser(email, password, "Adrian", "Bobo")
                     if (success) {
                         showToast("Registro exitoso")
                     } else {

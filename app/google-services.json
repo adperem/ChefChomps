@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "145638715054",
+    "project_id": "chefchompsdb",
+    "storage_bucket": "chefchompsdb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145638715054:android:658b099c3f22e430f4873f",
+        "android_client_info": {
+          "package_name": "com.example.chefchomps"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9CtRCXDkIk8MbR7VF2lZ02gw9V2HyHBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145638715054:android:300efdd2237704a0f4873f",
+        "android_client_info": {
+          "package_name": "com.example.chefchomps.logica"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9CtRCXDkIk8MbR7VF2lZ02gw9V2HyHBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:145638715054:android:c56ea5fea5a8e987f4873f",
+        "android_client_info": {
+          "package_name": "lllll.llll.llll"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD9CtRCXDkIk8MbR7VF2lZ02gw9V2HyHBc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

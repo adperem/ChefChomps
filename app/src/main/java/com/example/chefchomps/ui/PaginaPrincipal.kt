@@ -52,7 +52,7 @@ class PaginaPrincipal :ComponentActivity(){
     fun Welcome(modifier:Modifier=Modifier,
                 uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal(),){
         uiState.updatelist(
-            runBlocking { ApiCLient.findRecipesByIngredients(List<String>(10,{"apple"})) }
+            runBlocking { ApiCLient.getRandomRecipe() }
         )
         Scaffold(
             topBar = {

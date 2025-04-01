@@ -12,7 +12,7 @@ interface ApiService {
     suspend fun getRandomRecipe(
         @Query("apiKey") apiKey: String,
         @Query("number") number: Int = 10 // Por defecto 10, según tu ejemplo
-    ): Response<RandomRecipeResponse>
+    ): Response<List<Recipe>>
 
     @GET("recipes/findByIngredients")
     suspend fun findRecipesByIngredients(
@@ -36,9 +36,6 @@ interface ApiService {
 
 }
 
-data class RandomRecipeResponse(
-    val recipes: List<Recipe>
-)
 data class AutocompleteRecipe(
     val id: Int,
     val title: String,

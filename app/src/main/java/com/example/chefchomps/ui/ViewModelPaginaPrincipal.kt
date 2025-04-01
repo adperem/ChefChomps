@@ -34,7 +34,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
      * Añade recetas a la lista que ya tienes
      */
     fun updatelist(
-        metodo: Result<List<Recipe>> =runBlocking{ApiCLient.findRecipesByIngredients(
+        list: Result<List<Recipe>> =runBlocking{ApiCLient.findRecipesByIngredients(
             ingredients = List<String>(10,{"piña"})
         )}
     ){
@@ -42,7 +42,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
                 currentstate:UIPrincipalPageData->
             val lrecip:MutableList<Recipe> =ArrayList()
             lrecip.addAll(currentstate.lrecipe)
-            val rec : Result<List<Recipe>> = metodo;
+            val rec : Result<List<Recipe>> = list;
             if(rec.isSuccess){
                 rec.getOrNull()?.let { it1 -> lrecip.addAll(it1) } }
 

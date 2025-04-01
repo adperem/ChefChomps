@@ -15,7 +15,8 @@ private val DarkColorScheme = darkColorScheme(
 )
 
 private val LightColorScheme = lightColorScheme(
-    primary = Color(0xFFF8E9DE)
+    primary = Color(0xCCCCCCCC)
+
 )
 
 @Composable

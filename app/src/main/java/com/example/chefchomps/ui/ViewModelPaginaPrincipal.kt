@@ -35,7 +35,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
      */
     fun updatelist(
         list: Result<List<Recipe>> =runBlocking{ApiCLient.findRecipesByIngredients(
-            ingredients = List<String>(10,{"piña"})
+            ingredients = List<String>(10,{"pineapple"})
         )}
     ){
         _uiState.update{

@@ -44,7 +44,7 @@ class PaginaPrincipal :ComponentActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ChefChompsTema(){
+            ChefChompsTema(darkTheme=false){
                 Surface (modifier = Modifier.fillMaxSize())
                 {
                     Welcome();
@@ -79,21 +79,28 @@ class PaginaPrincipal :ComponentActivity(){
                     aux->Row(
                         modifier = modifier
                             .fillMaxWidth()
-                    ){Box(modifier = Modifier.height(200.dp)
-                    .weight(1f)){
-                        Text(text=aux.title,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.height(200.dp)
-                            )}
-                        AsyncImage(model=aux.image,
-                            contentDescription = "Imagen de la receta",
-                            modifier = Modifier.height(200.dp)
-                                .weight(1f),
-                            onLoading = { println("Cargando imagen...") },
-                            onSuccess = { println("Imagen cargada con éxito") },
-                            onError = { println("Error al cargar la imagen: ${it.result.throwable}") })
+                    ){
+                        Column(
+                            modifier = modifier
+                                .fillMaxWidth()
+                        ){
+                            Text(text=aux.title,
+                                textAlign = TextAlign.Center,
+                                modifier = modifier
+                                    .fillMaxWidth()
+                                )
+                            Spacer(modifier = Modifier.size(10.dp))
+                            AsyncImage(model=aux.image,
+                                contentDescription = "Imagen de la receta",
+                                onLoading = { println("Cargando imagen...") },
+                                onSuccess = { println("Imagen cargada con éxito") },
+                                onError = { println("Error al cargar la imagen: ${it.result.throwable}") },
+                                modifier = modifier.align(Alignment.CenterHorizontally)
+                                    .fillMaxSize()
+                            )
 
-                    }
+                        }
+                }
                 }
             }
 

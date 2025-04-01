@@ -31,7 +31,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
             }
             currentstate.copy(lrecipe=lrecip)
 
-    }
+        }
     }
     fun getlist():List<Recipe>{
         return uiState.value.lrecipe

@@ -33,7 +33,7 @@ interface ApiService {
         @Query("ignorePantry") ignorePantry: Boolean = false // Ignorar ingredientes de despensa
     ): Response<List<Recipe>> // Devuelve una lista directamente, no envuelta en un objeto
     /**
-     *  Metodo para recojer recetas de determinados ingredientes
+     *  Metodo para recoger recetas de determinados ingredientes
      *  @param apiKey valor de la key al API spoonacular
      *  @param id es el número asignado a una receta
      *  @return devuelve una respuesta que es una receta
@@ -45,10 +45,10 @@ interface ApiService {
     ): Response<Recipe> // Devuelve directamente un objeto Recipe
 
     /**
-     *  ??
+     *  Metodo para recoger las posibles continuaciones a la cadena
      *  @param apiKey valor de la key al API spoonacular
      *  @param number numero de elementos que recoge
-     *  @param query ??
+     *  @param query es la cadena de la que se quiere autocompletar
      *  @return devuelve una respuesta que es una receta
      */
     @GET("recipes/autocomplete")
@@ -59,10 +59,17 @@ interface ApiService {
     ): Response<List<AutocompleteRecipe>> // Devuelve una lista de AutocompleteRecipe
 
 }
+
+/**
+ * clase wraper del resultado de randomrecipe
+ */
 data class getRandomRecipe(
     val recipes: List<Recipe>
 )
 
+/**
+ * clase wraper del resultado de AutocompleteRecipe
+ */
 data class AutocompleteRecipe(
     val id: Int,
     val title: String,

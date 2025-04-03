@@ -1,5 +1,9 @@
 package com.example.chefchomps.model
 
+/**
+ * Clase que encapsula los productos que se pueden buscar a través de Spoonacular
+ * en https://spoonacular.com/food-api/docs#Get-Recipe-Information
+ */
 data class Product(
     val id: Int,
     val title: String,

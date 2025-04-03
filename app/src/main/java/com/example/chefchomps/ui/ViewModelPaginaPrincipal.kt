@@ -9,11 +9,17 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Clase para guardar todos los datos cambiantes de la página principal
+ * @param lrecipe lista de recetas
+ */
 data class UIPrincipalPageData(
     val lrecipe:MutableList<Recipe> =ArrayList(),
-
-
 )
+
+/**
+ * Clase donde se tocan los datos que hay de UI de la página principal
+ */
 class ViewModelPaginaPrincipal(): ViewModel() {
 
     private val _uiState = MutableStateFlow(UIPrincipalPageData())

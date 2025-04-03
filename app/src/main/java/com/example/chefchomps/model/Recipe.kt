@@ -1,5 +1,8 @@
 package com.example.chefchomps.model
 
+/**
+ * Clase que contiene todos los datos de la receta que usa ApiService
+ */
 data class Recipe(
     val id: Int,
     val title: String,
@@ -41,11 +44,17 @@ data class Recipe(
     val winePairing: WinePairing
 )
 
+/**
+ * Clase contenedor para las intrucciones para realizar una receta
+ */
 data class Instruction(
     val name: String,
     val steps: List<Step>
 )
 
+/**
+ * Clase contenedor para las intrucciones más simples a realizar en una instrucción
+ */
 data class Step(
     val number: Int,
     val step: String,
@@ -53,6 +62,9 @@ data class Step(
     val equipment: List<Equipment>?
 )
 
+/**
+ * Clase contenedor para los utensilios necesarios para realizar una receta
+ */
 data class Equipment(
     val id: Int,
     val name: String,

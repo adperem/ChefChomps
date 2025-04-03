@@ -6,14 +6,25 @@ import retrofit2.Response
 import retrofit2.http.Path
 
 interface ApiService {
-
-    // Nuevo metodo para receta aleatoria
+    /**
+     *  Nuevo metodo para receta aleatoria
+     *  @param apiKey valor de la key al API spoonacular
+     *  @param number numero de elementos que recoje
+     *  @return devuelve una respuesta que es una lista de recetas
+     */
     @GET("recipes/random")
     suspend fun getRandomRecipe(
         @Query("apiKey") apiKey: String,
         @Query("number") number: Int = 10 // Por defecto 10, según tu ejemplo
-    ): Response<List<Recipe>>
+    ): Response<getRandomRecipe>
 
+    /**
+     *  Metodo para recojer recetas de determinados ingredientes
+     *  @param apiKey valor de la key al API spoonacular
+     *  @param ingredients es una cadena de ingredientes separadas por coma
+     *  @param number numero de elementos que recoge
+     *  @return devuelve una respuesta que es una lista de recetas
+     */
     @GET("recipes/findByIngredients")
     suspend fun findRecipesByIngredients(
         @Query("apiKey") apiKey: String,
@@ -21,12 +32,25 @@ interface ApiService {
         @Query("number") number: Int = 10, // Número de resultados, por defecto 10
         @Query("ignorePantry") ignorePantry: Boolean = false // Ignorar ingredientes de despensa
     ): Response<List<Recipe>> // Devuelve una lista directamente, no envuelta en un objeto
-
+    /**
+     *  Metodo para recojer recetas de determinados ingredientes
+     *  @param apiKey valor de la key al API spoonacular
+     *  @param id es el número asignado a una receta
+     *  @return devuelve una respuesta que es una receta
+     */
     @GET("recipes/{id}/information")
     suspend fun getRecipeInformation(
         @Path("id") id: Int,
         @Query("apiKey") apiKey: String
     ): Response<Recipe> // Devuelve directamente un objeto Recipe
+
+    /**
+     *  ??
+     *  @param apiKey valor de la key al API spoonacular
+     *  @param number numero de elementos que recoge
+     *  @param query ??
+     *  @return devuelve una respuesta que es una receta
+     */
     @GET("recipes/autocomplete")
     suspend fun autocompleteRecipes(
         @Query("apiKey") apiKey: String,
@@ -35,6 +59,9 @@ interface ApiService {
     ): Response<List<AutocompleteRecipe>> // Devuelve una lista de AutocompleteRecipe
 
 }
+data class getRandomRecipe(
+    val recipes: List<Recipe>
+)
 
 data class AutocompleteRecipe(
     val id: Int,

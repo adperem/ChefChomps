@@ -32,6 +32,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
     }
     /**
      * Añade recetas a la lista que ya tienes
+     * @param list es el resultado de una lista de recetas
      */
     fun updatelist(
         list: Result<List<Recipe>> =runBlocking{ApiCLient.findRecipesByIngredients(
@@ -52,6 +53,7 @@ class ViewModelPaginaPrincipal(): ViewModel() {
     }
     /**
      * Devuelve la lista de recetas
+     * @return Devuelve una lista de recetas que esten en el ViewModel
      */
     fun getlist():List<Recipe>{
         return uiState.value.lrecipe

@@ -35,14 +35,19 @@ import androidx.compose.ui.unit.em
 import coil.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
+import com.example.chefchomps.logica.ApiCLient.Companion.getRandomRecipe
 import kotlinx.coroutines.runBlocking
 
+/**
+ * Class que define la página principal de la app ChefChomps
+ *
+ */
 class PaginaPrincipal :ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ChefChompsTema(darkTheme=false){
+            ChefChompsTema(){
                 Surface (modifier = Modifier.fillMaxSize())
                 {
                     Welcome();
@@ -51,12 +56,15 @@ class PaginaPrincipal :ComponentActivity(){
     }
     /**
      * Pagina de inicio para la aplicacion
+     * @param modifier modificador que define comportamiento
+     * @param uiState contiene todos los datos relacionados con la página principal
      * */
     @Preview
     @Composable
     fun Welcome(modifier:Modifier=Modifier,
-                uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal(),){
-        uiState.updatelist( )
+                uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal()
+    ){
+        uiState.updatelist(runBlocking { ApiCLient.getRandomRecipe() } )
         Scaffold(
             topBar = {
                 Row(verticalAlignment=Alignment.CenterVertically){

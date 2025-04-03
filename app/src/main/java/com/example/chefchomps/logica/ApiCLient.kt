@@ -48,12 +48,12 @@ class ApiCLient {
         }
 
         // Nuevo metodo para receta aleatoria
-        suspend fun getRandomRecipe(): Result<Recipe> {
+        suspend fun getRandomRecipe(): Result<List<Recipe>>{
             return try {
                 val response = apiService.getRandomRecipe(API_KEY)
                 if (response.isSuccessful) {
                     val recipes = response.body()?.recipes ?: emptyList()
-                    Result.success(recipes.firstOrNull() ?: throw Exception("No recipe returned"))
+                    Result.success(recipes)
                 } else {
                     Result.failure(Exception("Error: ${response.code()} - ${response.message()}"))
                 }

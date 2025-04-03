@@ -14,7 +14,15 @@ import androidx.compose.ui.unit.dp
 import com.example.chefchomps.logica.DatabaseHelper
 import kotlinx.coroutines.launch
 
+/**
+ * Actividad principal para la pantalla de inicio de sesión y registro del usuario.
+ */
 class Login : ComponentActivity() {
+    /**
+     * Metodo de ciclo de vida que se ejecuta al crear la actividad.
+     *
+     * @param savedInstanceState Estado previamente guardado de la actividad.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -25,6 +33,11 @@ class Login : ComponentActivity() {
     }
 }
 
+/**
+ * Composable que representa el diseño de la pantalla de inicio de sesión y registro.
+ *
+ * @param showToast Función de callback para mostrar mensajes emergentes.
+ */
 @Composable
 fun LoginLayout(showToast: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
@@ -60,7 +73,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val success = firebaseHelper.registerUser(email, password, "Adrian", "Bobo")
+                    val success = firebaseHelper.registerUser(email, password, "Pepe", "Perez")
                     if (success) {
                         showToast("Registro exitoso")
                     } else {
@@ -93,6 +106,9 @@ fun LoginLayout(showToast: (String) -> Unit) {
     }
 }
 
+/**
+ * Previsualización del diseño de la pantalla de inicio de sesión y registro.
+ */
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {

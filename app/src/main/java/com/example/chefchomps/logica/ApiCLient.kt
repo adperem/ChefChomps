@@ -20,21 +20,36 @@ import kotlinx.coroutines.awaitAll
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 
-
+/**
+ * Cliente de la API para interactuar con la API de Spoonacular.
+ *
+ * Este objeto se encarga de gestionar las peticiones hacia la API, incluyendo la autenticación,
+ * la configuración del cliente HTTP, y las diversas consultas que se pueden realizar, como obtener
+ * recetas aleatorias, buscar recetas por ingredientes, obtener detalles de recetas y autocompletar recetas.
+ */
 class ApiCLient {
     companion object {
 
         private val BASE_URL = "https://api.spoonacular.com/"
         private val API_KEY = BuildConfig.API_KEY
 
+        /**
+         * Configura el interceptor para el logging de las peticiones HTTP.
+         */
         val logging = HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY
         }
 
+        /**
+         * Configura el cliente HTTP con el interceptor de logging.
+         */
         val client = OkHttpClient.Builder()
             .addInterceptor(logging)
             .build()
 
+        /**
+         * Configura la instancia Retrofit para interactuar con la API.
+         */
         private val retrofit: Retrofit by lazy {
             Retrofit.Builder()
                 .baseUrl(BASE_URL)
@@ -43,11 +58,18 @@ class ApiCLient {
                 .build()
         }
 
+        /**
+         * Crea el servicio API a partir de Retrofit.
+         */
         private val apiService: ApiService by lazy {
             retrofit.create(ApiService::class.java)
         }
 
-        // Nuevo metodo para receta aleatoria
+        /**
+         * Obtiene una receta aleatoria desde la API.
+         *
+         * @return Result con una lista de recetas o error si la petición falla.
+         */
         suspend fun getRandomRecipe(): Result<List<Recipe>>{
             return try {
                 val response = apiService.getRandomRecipe(API_KEY)
@@ -62,6 +84,12 @@ class ApiCLient {
             }
         }
 
+        /**
+         * Busca recetas por ingredientes proporcionados.
+         *
+         * @param ingredients Lista de ingredientes a buscar en las recetas.
+         * @return Result con una lista de recetas o error si la petición falla.
+         */
         suspend fun findRecipesByIngredients(ingredients: List<String>): Result<List<Recipe>> {
             return try {
                 val ingredientsQuery =
@@ -82,6 +110,12 @@ class ApiCLient {
             }
         }
 
+        /**
+         * Obtiene la información completa de una receta mediante su ID.
+         *
+         * @param id ID de la receta.
+         * @return Result con la receta o error si la petición falla.
+         */
         suspend fun getRecipeInformation(id: Int): Result<Recipe> {
             return try {
                 val response = apiService.getRecipeInformation(id, API_KEY)
@@ -97,6 +131,12 @@ class ApiCLient {
             }
         }
 
+        /**
+         * Autocompleta las recetas a partir de una consulta, obteniendo las sugerencias y detalles de cada receta.
+         *
+         * @param query Consulta de texto para la autocompletación.
+         * @return Result con una lista de recetas autocompletadas o error si la petición falla.
+         */
         suspend fun autocompleteRecipes(query: String): Result<List<Recipe>> = coroutineScope {
             return@coroutineScope try {
                 val autocompleteResponse = apiService.autocompleteRecipes(API_KEY, query)
@@ -119,6 +159,12 @@ class ApiCLient {
     }
 }
 
+/**
+ * Deserializador personalizado para la clase Recipe.
+ *
+ * Este deserializador convierte el JSON de la receta en objetos Kotlin de tipo `Recipe` y sus propiedades
+ * asociadas, como instrucciones y pasos.
+ */
 class RecipeDeserializer : JsonDeserializer<Recipe> {
     override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): Recipe {
         val jsonObject = json.asJsonObject

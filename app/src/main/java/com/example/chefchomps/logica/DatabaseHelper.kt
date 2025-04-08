@@ -69,4 +69,19 @@ class DatabaseHelper {
             false
         }
     }
+
+    suspend fun recoverPassword(email: String): String? {
+        return try {
+            val documentSnapshot = db.collection("usuarios").document(email).get().await()
+            if (documentSnapshot.exists()) {
+                val usuario = documentSnapshot.toObject(Usuario::class.java)
+                usuario?.password
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
 }

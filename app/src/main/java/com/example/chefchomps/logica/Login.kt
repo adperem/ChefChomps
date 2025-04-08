@@ -73,7 +73,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val success = firebaseHelper.registerUser(email, password, "Pepe", "Perez")
+                    val success = firebaseHelper.registerUser(email, password, "Admin", "Admin")
                     if (success) {
                         showToast("Registro exitoso")
                     } else {
@@ -85,8 +85,6 @@ fun LoginLayout(showToast: (String) -> Unit) {
         ) {
             Text("Registrar")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
@@ -102,6 +100,26 @@ fun LoginLayout(showToast: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Iniciar sesión")
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    if (email.isBlank()) {
+                        showToast("Introduce un email válido")
+                    } else {
+                        val passwordRecuperada = firebaseHelper.recoverPassword(email)
+                        if (passwordRecuperada != null) {
+                            showToast("Tu contraseña es: $passwordRecuperada")
+                        } else {
+                            showToast("Email no encontrado")
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Recuperar contraseña")
         }
     }
 }

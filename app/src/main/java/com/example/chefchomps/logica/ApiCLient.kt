@@ -30,8 +30,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 class ApiCLient {
     companion object {
 
-        private val BASE_URL = "https://api.spoonacular.com/"
-        private val API_KEY = BuildConfig.API_KEY
+        private const val BASE_URL = "https://api.spoonacular.com/"
+        private const val API_KEY = BuildConfig.API_KEY
 
         /**
          * Configura el interceptor para el logging de las peticiones HTTP.

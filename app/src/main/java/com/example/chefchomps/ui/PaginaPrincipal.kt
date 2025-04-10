@@ -1,6 +1,7 @@
 package com.example.chefchomps.ui
 
 import ChefChompsTema
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -17,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -47,10 +50,10 @@ class PaginaPrincipal :ComponentActivity(){
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ChefChompsTema(){
+            ChefChompsTema(darkTheme = false){
                 Surface (modifier = Modifier.fillMaxSize())
                 {
-                    Welcome();
+                    PaginaPrincipal();
                 }
             }}
     }
@@ -59,18 +62,24 @@ class PaginaPrincipal :ComponentActivity(){
      * @param modifier modificador que define comportamiento
      * @param uiState contiene todos los datos relacionados con la página principal
      * */
+    @SuppressLint("NotConstructor")
     @Preview
     @Composable
-    fun Welcome(modifier:Modifier=Modifier,
+    fun PaginaPrincipal(modifier:Modifier=Modifier,
                 uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal()
     ){
         uiState.updatelist(runBlocking { ApiCLient.getRandomRecipe() } )
         Scaffold(
             topBar = {
                 Row(verticalAlignment=Alignment.CenterVertically){
+                    Image(painter = painterResource(R.drawable.menuicon), contentDescription = "",
+                        modifier=modifier
+                        .size(30.dp)
+                    )
                     Image(painter = painterResource(R.drawable.chomper), contentDescription = "",modifier=modifier
-                        .size(150.dp))
-                    Text(text="CHEF CHOMPS", maxLines = 1, textAlign = TextAlign.Center,modifier=modifier .fillMaxWidth(), fontSize = 7.em, fontWeight = FontWeight.Bold)
+                        .size(100.dp))
+                    Text(text="CHEF CHOMPS", maxLines = 1, textAlign = TextAlign.Center,modifier=modifier .fillMaxWidth(),
+                        fontSize = 7.em, fontWeight = FontWeight.Bold)
                 }
             },
             modifier = modifier.padding(10.dp)
@@ -83,14 +92,10 @@ class PaginaPrincipal :ComponentActivity(){
                     aux->Row(
                         modifier = modifier
                             .fillMaxWidth()
-                            .border(BorderStroke(2.dp, Brush.sweepGradient(
-                                1.0f to Color(0xACCCCCCC),
-                                1.0f to Color(0xBCCCCCCC),
-                                1.0f to Color(0xCCCCCCCC),
-                                center = Offset(0.0f, 100.0f))
-                            ))
+                            .border(2.dp, Color(0xCCCCCCCC), shape = RoundedCornerShape(5.dp))
                     ){
                         Column(
+
                             modifier = modifier
                                 .fillMaxWidth()
                         ){
@@ -101,6 +106,7 @@ class PaginaPrincipal :ComponentActivity(){
                                 )
                             Spacer(modifier = Modifier.size(10.dp))
                             AsyncImage(model=aux.image,
+                                placeholder = painterResource(R.drawable.nofoodplaceholder),
                                 contentDescription = "Imagen de la receta",
                                 onLoading = { println("Cargando imagen...") },
                                 onSuccess = { println("Imagen cargada con éxito") },

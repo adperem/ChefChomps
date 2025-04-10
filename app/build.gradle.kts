@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("com.google.gms.google-services")
 }
 
 // Cargar local.properties
@@ -31,7 +32,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
         // Añadir apiKey a BuildConfig
-        buildConfigField("String", "API_KEY", "\"${localProperties.getProperty("apiKey") ?: "default_key"}\"")
+        buildConfigField("String", "API_KEY", "\"${project.findProperty("apiKey")}\"")
     }
 
     // Cargar local.properties
@@ -66,6 +67,8 @@ android {
 }
 
 dependencies {
+    //implementation(libs.coil.compose)
+    implementation(libs.coil.kt.coil.compose)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -82,9 +85,17 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
+
     // Retrofit y dependencias relacionadas
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.gson)
+    implementation(libs.logging.interceptor)
+
+
+    implementation("com.google.firebase:firebase-auth-ktx:22.1.2")
+    implementation("com.google.firebase:firebase-firestore-ktx:24.9.1")
+    implementation("com.google.firebase:firebase-firestore")
+    implementation ("com.google.firebase:firebase-bom:32.0.0")
 
 }

@@ -32,6 +32,7 @@
             android:theme="@style/Theme.ChefChomps">
 
         </activity>
+        <activity android:name=".ui.RegistroActivity" />
     </application>
 
 </manifest>

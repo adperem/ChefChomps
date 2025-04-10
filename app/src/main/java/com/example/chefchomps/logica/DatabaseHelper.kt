@@ -1,17 +1,28 @@
 package com.example.chefchomps.logica
 
 import com.example.chefchomps.model.Usuario
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
-
-
 
 /**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.
  */
-class DatabaseHelper {
+class DatabaseHelper public constructor() {
 
-    private val db = FirebaseFirestore.getInstance()
+    private val auth = FirebaseAuth.getInstance()
+    internal val firestore = FirebaseFirestore.getInstance()
+
+    companion object {
+        @Volatile
+        private var INSTANCE: DatabaseHelper? = null
+
+        fun getInstance(): DatabaseHelper {
+            return INSTANCE ?: synchronized(this) {
+                INSTANCE ?: DatabaseHelper().also { INSTANCE = it }
+            }
+        }
+    }
 
     /**
      * Registra un nuevo usuario en la base de datos.
@@ -24,8 +35,9 @@ class DatabaseHelper {
      */
     suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): Boolean {
         return try {
-            val usuario = Usuario(email, nombre, apellidos, password)
-            db.collection("usuarios").document(email).set(usuario).await()
+            val result = auth.createUserWithEmailAndPassword(email, password).await()
+            val user = Usuario(email, nombre, apellidos, password)
+            firestore.collection("usuarios").document(result.user?.uid ?: "").set(user).await()
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -42,19 +54,32 @@ class DatabaseHelper {
      */
     suspend fun loginUser(email: String, password: String): Boolean {
         return try {
-            val documentSnapshot = db.collection("usuarios").document(email).get().await()
-
-            if (documentSnapshot.exists()) {
-                val usuario = documentSnapshot.toObject(Usuario::class.java)
-                if (usuario?.password == password) {
-                    return true
-                }
-            }
-
-            false
+            auth.signInWithEmailAndPassword(email, password).await()
+            true
         } catch (e: Exception) {
-            e.printStackTrace()
             false
+        }
+    }
+
+    fun getCurrentUser(): Usuario? {
+        val firebaseUser = auth.currentUser
+        return if (firebaseUser != null) {
+            Usuario(
+                email = firebaseUser.email ?: "",
+                nombre = "",  // Estos campos se cargarán desde Firestore
+                apellidos = "",
+                password = ""
+            )
+        } else null
+    }
+
+    suspend fun getUserProfile(): Usuario? {
+        val userId = auth.currentUser?.uid ?: return null
+        return try {
+            val doc = firestore.collection("usuarios").document(userId).get().await()
+            doc.toObject(Usuario::class.java)
+        } catch (e: Exception) {
+            null
         }
     }
 }

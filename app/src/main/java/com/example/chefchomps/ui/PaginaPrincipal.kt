@@ -1,123 +1,191 @@
 package com.example.chefchomps.ui
 
-import ChefChompsTema
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.em
-import coil.compose.AsyncImage
-import com.example.chefchomps.R
-import com.example.chefchomps.logica.ApiCLient
-import com.example.chefchomps.logica.ApiCLient.Companion.getRandomRecipe
-import kotlinx.coroutines.runBlocking
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.example.chefchomps.model.Recipe
 
-/**
- * Class que define la página principal de la app ChefChomps
- *
- */
-class PaginaPrincipal :ComponentActivity(){
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
-        setContent {
-            ChefChompsTema(){
-                Surface (modifier = Modifier.fillMaxSize())
-                {
-                    Welcome();
-                }
-            }}
-    }
-    /**
-     * Pagina de inicio para la aplicacion
-     * @param modifier modificador que define comportamiento
-     * @param uiState contiene todos los datos relacionados con la página principal
-     * */
-    @Preview
-    @Composable
-    fun Welcome(modifier:Modifier=Modifier,
-                uiState:ViewModelPaginaPrincipal=ViewModelPaginaPrincipal()
-    ){
-        uiState.updatelist(runBlocking { ApiCLient.getRandomRecipe() } )
-        Scaffold(
-            topBar = {
-                Row(verticalAlignment=Alignment.CenterVertically){
-                    Image(painter = painterResource(R.drawable.chomper), contentDescription = "",modifier=modifier
-                        .size(150.dp))
-                    Text(text="CHEF CHOMPS", maxLines = 1, textAlign = TextAlign.Center,modifier=modifier .fillMaxWidth(), fontSize = 7.em, fontWeight = FontWeight.Bold)
-                }
-            },
-            modifier = modifier.padding(10.dp)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun PaginaPrincipal(
+    viewModel: ViewModelPaginaPrincipal,
+    onNavigateToLogin: () -> Unit,
+    onNavigateToProfile: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-        ){ innerPadding->
-            LazyColumn(modifier=modifier
-                .padding(innerPadding)
-                .fillMaxWidth()) {
-                items(uiState.getlist()){
-                    aux->Row(
-                        modifier = modifier
-                            .fillMaxWidth()
-                            .border(BorderStroke(2.dp, Brush.sweepGradient(
-                                1.0f to Color(0xACCCCCCC),
-                                1.0f to Color(0xBCCCCCCC),
-                                1.0f to Color(0xCCCCCCCC),
-                                center = Offset(0.0f, 100.0f))
-                            ))
-                    ){
-                        Column(
-                            modifier = modifier
-                                .fillMaxWidth()
-                        ){
-                            Text(text=aux.title,
-                                textAlign = TextAlign.Center,
-                                modifier = modifier
-                                    .fillMaxWidth()
-                                )
-                            Spacer(modifier = Modifier.size(10.dp))
-                            AsyncImage(model=aux.image,
-                                contentDescription = "Imagen de la receta",
-                                onLoading = { println("Cargando imagen...") },
-                                onSuccess = { println("Imagen cargada con éxito") },
-                                onError = { println("Error al cargar la imagen: ${it.result.throwable}") },
-                                modifier = modifier.align(Alignment.CenterHorizontally)
-                                    .fillMaxSize()
-                            )
-
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("ChefChomps") },
+                actions = {
+                    IconButton(onClick = { viewModel.toggleMenu() }) {
+                        Icon(
+                            imageVector = if (uiState.isMenuExpanded) Icons.Default.Close else Icons.Default.Menu,
+                            contentDescription = "Menú"
+                        )
+                    }
                 }
-                }
+            )
+        }
+    ) { paddingValues ->
+        Box(modifier = Modifier.padding(paddingValues)) {
+            // Contenido principal
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(16.dp)
+            ) {
+                // Lista de recetas
+                RecipeList(recipes = uiState.lrecipe)
             }
 
+            // Menú desplegable
+            if (uiState.isMenuExpanded) {
+                DropdownMenu(
+                    expanded = uiState.isMenuExpanded,
+                    onDismissRequest = { viewModel.toggleMenu() },
+                    modifier = Modifier.fillMaxWidth(0.7f)
+                ) {
+                    // Opciones de autenticación
+                    if (uiState.currentUser == null) {
+                        DropdownMenuItem(
+                            text = { Text("Iniciar sesión") },
+                            onClick = {
+                                viewModel.toggleMenu()
+                                onNavigateToLogin()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Login, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Registrarse") },
+                            onClick = {
+                                viewModel.toggleMenu()
+                                onNavigateToLogin()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.PersonAdd, contentDescription = null)
+                            }
+                        )
+                    } else {
+                        DropdownMenuItem(
+                            text = { Text("Mi perfil") },
+                            onClick = {
+                                viewModel.toggleMenu()
+                                onNavigateToProfile()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Person, contentDescription = null)
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text("Cerrar sesión") },
+                            onClick = {
+                                viewModel.toggleMenu()
+                                viewModel.signOut()
+                            },
+                            leadingIcon = {
+                                Icon(Icons.Default.Logout, contentDescription = null)
+                            }
+                        )
+                    }
 
+                    Divider()
 
+                    // Opciones de filtros
+                    DropdownMenuItem(
+                        text = { Text("Buscar por ingredientes") },
+                        onClick = {
+                            viewModel.toggleMenu()
+                            // TODO: Implementar búsqueda por ingredientes
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Search, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Recetas aleatorias") },
+                        onClick = {
+                            viewModel.toggleMenu()
+                            // TODO: Implementar recetas aleatorias
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.Refresh, contentDescription = null)
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Autocompletar búsqueda") },
+                        onClick = {
+                            viewModel.toggleMenu()
+                            // TODO: Implementar autocompletado
+                        },
+                        leadingIcon = {
+                            Icon(Icons.Default.AutoAwesome, contentDescription = null)
+                        }
+                    )
+                }
+            }
         }
-
     }
+}
 
+@Composable
+fun RecipeList(
+    recipes: List<Recipe>,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        recipes.forEach { recipe ->
+            RecipeItem(recipe = recipe)
+        }
+    }
+}
+
+@Composable
+fun RecipeItem(
+    recipe: Recipe,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Text(
+                text = recipe.title,
+                style = MaterialTheme.typography.titleLarge
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = recipe.instructions ?: "Sin instrucciones disponibles",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun PaginaPrincipalPreview() {
+    PaginaPrincipal(
+        viewModel = ViewModelPaginaPrincipal(),
+        onNavigateToLogin = {},
+        onNavigateToProfile = {},
+        modifier = Modifier
+    )
 }

@@ -1,22 +1,10 @@
 package com.example.chefchomps.logica
 
+import com.example.chefchomps.model.Usuario
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
 
-/**
- * Representa un usuario con sus datos básicos.
- *
- * @param email Correo electrónico del usuario.
- * @param nombre Nombre del usuario.
- * @param apellidos Apellidos del usuario.
- * @param password Contraseña del usuario.
- */
-data class Usuario(
-    val email: String = "",
-    val nombre: String = "",
-    val apellidos: String = "",
-    val password: String = ""
-)
+
 
 /**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.

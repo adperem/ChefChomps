@@ -1,7 +1,7 @@
 package com.example.chefchomps.model;
 
 /**
- * En Desarrollo
+ * En blanco pa que no de fallo
  */
 public class WinePairing {
 }

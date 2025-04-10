@@ -19,15 +19,16 @@ class VerReceta : ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        Recipe r = ApiCLient.getRandomRecipe()
         setContent {
-            RecetaVer(Recipe r);
+            PaginaDetalle(r)
         }
     }
     /**
      * Pagina de visualización de una receta
      * */
     @Composable
-    fun RecetaVer(rec: Recipe, modifier: Modifier = Modifier.fillMaxWidth()){
+    fun RecetaVer(/*rec: Recipe,*/ modifier: Modifier = Modifier.fillMaxWidth()){
         Column(modifier=modifier
             .fillMaxWidth()) {
             Row{

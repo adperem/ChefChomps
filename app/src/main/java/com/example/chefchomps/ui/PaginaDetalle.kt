@@ -26,8 +26,7 @@ import kotlinx.coroutines.runBlocking
 
 
 @Composable
-fun PaginaDetalle(modifier: Modifier = Modifier,
-                  recipe: Recipe
+fun PaginaDetalle(modifier: Modifier = Modifier,recipe: Recipe
 ){
 
     Scaffold(
@@ -53,6 +52,7 @@ fun PaginaDetalle(modifier: Modifier = Modifier,
                 modifier = modifier.align(Alignment.CenterHorizontally)
                     .fillMaxSize()
             )
+
         }
     }
 }

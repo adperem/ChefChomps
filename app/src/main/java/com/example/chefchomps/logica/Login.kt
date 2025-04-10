@@ -1,5 +1,6 @@
 package com.example.chefchomps.logica
 
+import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -9,9 +10,10 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.chefchomps.logica.DatabaseHelper
+import com.example.chefchomps.ui.RegistroActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -70,23 +72,16 @@ fun LoginLayout(showToast: (String) -> Unit) {
 
         Spacer(modifier = Modifier.height(16.dp))
 
+        val context = LocalContext.current
+
         Button(
             onClick = {
-                coroutineScope.launch {
-                    val success = firebaseHelper.registerUser(email, password, "Pepe", "Perez")
-                    if (success) {
-                        showToast("Registro exitoso")
-                    } else {
-                        showToast("Error al registrar")
-                    }
-                }
+                context.startActivity(Intent(context, RegistroActivity::class.java))
             },
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Registrar")
+            Text("Registrarte")
         }
-
-        Spacer(modifier = Modifier.height(16.dp))
 
         Button(
             onClick = {
@@ -102,6 +97,26 @@ fun LoginLayout(showToast: (String) -> Unit) {
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Iniciar sesión")
+        }
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    if (email.isBlank()) {
+                        showToast("Introduce un email válido")
+                    } else {
+                        val passwordRecuperada = firebaseHelper.recoverPassword(email)
+                        if (passwordRecuperada != null) {
+                            showToast("Tu contraseña es: $passwordRecuperada")
+                        } else {
+                            showToast("Email no encontrado")
+                        }
+                    }
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Recuperar contraseña")
         }
     }
 }

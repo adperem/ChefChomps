@@ -44,7 +44,7 @@ class Login : ComponentActivity() {
 fun LoginLayout(showToast: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    val firebaseHelper = remember { DatabaseHelper() }
+    val databaseHelper = remember { DatabaseHelper() }
     val coroutineScope = rememberCoroutineScope()
 
     Column(
@@ -86,7 +86,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         Button(
             onClick = {
                 coroutineScope.launch {
-                    val success = firebaseHelper.loginUser(email, password)
+                    val success = databaseHelper.loginUser(email, password)
                     if (success) {
                         showToast("Inicio de sesión exitoso")
                     } else {
@@ -105,7 +105,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
                     if (email.isBlank()) {
                         showToast("Introduce un email válido")
                     } else {
-                        val passwordRecuperada = firebaseHelper.recoverPassword(email)
+                        val passwordRecuperada = databaseHelper.recoverPassword(email)
                         if (passwordRecuperada != null) {
                             showToast("Tu contraseña es: $passwordRecuperada")
                         } else {

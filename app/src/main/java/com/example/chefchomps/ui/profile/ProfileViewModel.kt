@@ -4,22 +4,20 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.model.Usuario
-import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 class ProfileViewModel : ViewModel() {
-    private val databaseHelper = DatabaseHelper.getInstance()
-    private val auth = FirebaseAuth.getInstance()
+    private val databaseHelper = DatabaseHelper()
     
     private val _uiState = MutableStateFlow<ProfileUiState>(ProfileUiState.Loading)
     val uiState: StateFlow<ProfileUiState> = _uiState
 
     init {
         // Observar cambios en el estado de autenticación
-        auth.addAuthStateListener { firebaseAuth ->
+        databaseHelper.auth.addAuthStateListener { firebaseAuth ->
             val user = firebaseAuth.currentUser
             if (user != null) {
                 // Usuario está autenticado, cargar sus datos
@@ -47,16 +45,16 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch {
             try {
                 _uiState.value = ProfileUiState.Loading
-                val userId = auth.currentUser?.uid ?: throw Exception("Usuario no autenticado")
+                val userId = databaseHelper.auth.currentUser?.uid ?: throw Exception("Usuario no autenticado")
                 
                 // Actualizar en Firestore
-                databaseHelper.firestore.collection("usuarios").document(userId)
+                databaseHelper.db.collection("usuarios").document(userId)
                     .set(usuario)
                     .await()
                 
                 // Actualizar email en Authentication si ha cambiado
-                if (usuario.email != auth.currentUser?.email) {
-                    auth.currentUser?.updateEmail(usuario.email)?.await()
+                if (usuario.email != databaseHelper.auth.currentUser?.email) {
+                    databaseHelper.auth.currentUser?.updateEmail(usuario.email)?.await()
                 }
                 
                 _uiState.value = ProfileUiState.Success(usuario)
@@ -67,7 +65,7 @@ class ProfileViewModel : ViewModel() {
     }
 
     fun signOut() {
-        auth.signOut()
+        databaseHelper.signOut()
     }
 }
 

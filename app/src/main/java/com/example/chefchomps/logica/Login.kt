@@ -15,6 +15,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chefchomps.ui.RegistroActivity
 import kotlinx.coroutines.launch
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.chefchomps.R
 
 /**
  * Actividad principal para la pantalla de inicio de sesión y registro del usuario.
@@ -54,6 +57,12 @@ fun LoginLayout(showToast: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(painter = painterResource(R.drawable.chomper), contentDescription = "")
+
+        Text("INICIAR SESIÓN", style = MaterialTheme.typography.headlineMedium)
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         TextField(
             value = email,
             onValueChange = { email = it },

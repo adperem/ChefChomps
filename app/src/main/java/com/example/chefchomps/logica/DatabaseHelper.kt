@@ -11,7 +11,7 @@ import com.example.chefchomps.model.Usuario
 class DatabaseHelper {
     internal val auth = FirebaseAuth.getInstance()
     val db = FirebaseFirestore.getInstance()
-    //uik
+    //ultimo
 
     /**
      * Registra un nuevo usuario en la base de datos.

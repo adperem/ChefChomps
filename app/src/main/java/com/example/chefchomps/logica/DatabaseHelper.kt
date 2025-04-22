@@ -1,16 +1,17 @@
 package com.example.chefchomps.logica
 
-import com.example.chefchomps.model.Usuario
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.example.chefchomps.model.Usuario
 
 /**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.
  */
 class DatabaseHelper {
     internal val auth = FirebaseAuth.getInstance()
-    internal val db = FirebaseFirestore.getInstance()
+    val db = FirebaseFirestore.getInstance()
+    //ultimo
 
     /**
      * Registra un nuevo usuario en la base de datos.
@@ -23,7 +24,6 @@ class DatabaseHelper {
      */
     suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): RegistroResultado {
         return try {
-            // Verificar si el email ya está registrado
             val snapshot = db.collection("usuarios")
                 .whereEqualTo("email", email)
                 .get()
@@ -33,11 +33,18 @@ class DatabaseHelper {
                 return RegistroResultado.EMAIL_YA_REGISTRADO
             }
 
-            // Crear usuario en Firebase Auth
-            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val userId = authResult.user?.uid ?: throw Exception("Error al crear usuario")
+            val userId = db.runTransaction { transaction ->
+                val metadataRef = db.collection("metadata").document("contadorUsuarios")
+                val metadataSnapshot = transaction.get(metadataRef)
 
-            // Guardar datos adicionales en Firestore
+                val ultimoId = metadataSnapshot.getLong("ultimoId") ?: 0
+                val nuevoId = ultimoId + 1
+
+                transaction.update(metadataRef, "ultimoId", nuevoId)
+
+                "userId$nuevoId"
+            }.await()
+
             val usuario = Usuario(email, nombre, apellidos, password)
             db.collection("usuarios").document(userId).set(usuario).await()
 
@@ -63,8 +70,13 @@ class DatabaseHelper {
      */
     suspend fun loginUser(email: String, password: String): Boolean {
         return try {
-            auth.signInWithEmailAndPassword(email, password).await()
-            true
+            val querySnapshot = db.collection("usuarios")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+
+            val usuario = querySnapshot.documents.firstOrNull()?.toObject(Usuario::class.java)
+            usuario?.password == password
         } catch (e: Exception) {
             e.printStackTrace()
             false

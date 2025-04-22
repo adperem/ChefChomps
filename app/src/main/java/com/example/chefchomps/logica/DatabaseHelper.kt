@@ -6,11 +6,27 @@ import kotlinx.coroutines.tasks.await
 import com.example.chefchomps.model.Usuario
 
 /**
+ * Representa un usuario con sus datos básicos.
+ *
+ * @param email Correo electrónico del usuario.
+ * @param nombre Nombre del usuario.
+ * @param apellidos Apellidos del usuario.
+ * @param password Contraseña del usuario.
+ */
+data class Usuario(
+    val email: String = "",
+    val nombre: String = "",
+    val apellidos: String = "",
+    val password: String = ""
+)
+
+/**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.
  */
 class DatabaseHelper {
+
+    val db = FirebaseFirestore.getInstance();
     internal val auth = FirebaseAuth.getInstance()
-    val db = FirebaseFirestore.getInstance()
     //ultimo
 
     /**
@@ -20,7 +36,7 @@ class DatabaseHelper {
      * @param password Contraseña del usuario.
      * @param nombre Nombre del usuario.
      * @param apellidos Apellidos del usuario.
-     * @return Resultado del registro.
+     * @return 'true' si el registro fue exitoso, 'false' en caso de error.
      */
     suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): RegistroResultado {
         return try {
@@ -49,6 +65,7 @@ class DatabaseHelper {
             db.collection("usuarios").document(userId).set(usuario).await()
 
             RegistroResultado.EXITO
+
         } catch (e: Exception) {
             e.printStackTrace()
             RegistroResultado.ERROR
@@ -62,7 +79,7 @@ class DatabaseHelper {
     }
 
     /**
-     * Inicia sesión verificando las credenciales del usuario.
+     * Inicia sesion verificando las credenciales del usuario.
      *
      * @param email Correo electrónico del usuario.
      * @param password Contraseña del usuario.
@@ -83,12 +100,6 @@ class DatabaseHelper {
         }
     }
 
-    /**
-     * Recupera la contraseña del usuario.
-     *
-     * @param email Correo electrónico del usuario.
-     * @return La contraseña del usuario si existe, null en caso contrario.
-     */
     suspend fun recoverPassword(email: String): String? {
         return try {
             val querySnapshot = db.collection("usuarios")
@@ -109,10 +120,10 @@ class DatabaseHelper {
      *
      * @return El usuario actual o null si no hay usuario autenticado.
      */
-    fun getCurrentUser(): Usuario? {
+    fun getCurrentUser(): com.example.chefchomps.model.Usuario? {
         val firebaseUser = auth.currentUser
         return if (firebaseUser != null) {
-            Usuario(
+            com.example.chefchomps.model.Usuario(
                 email = firebaseUser.email ?: "",
                 nombre = "",  // Estos campos se cargarán desde Firestore
                 apellidos = "",
@@ -126,11 +137,11 @@ class DatabaseHelper {
      *
      * @return El perfil completo del usuario o null si no está autenticado.
      */
-    suspend fun getUserProfile(): Usuario? {
+    suspend fun getUserProfile(): com.example.chefchomps.model.Usuario? {
         val userId = auth.currentUser?.uid ?: return null
         return try {
             val doc = db.collection("usuarios").document(userId).get().await()
-            doc.toObject(Usuario::class.java)
+            doc.toObject(com.example.chefchomps.model.Usuario::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -143,4 +154,5 @@ class DatabaseHelper {
     fun signOut() {
         auth.signOut()
     }
+
 }

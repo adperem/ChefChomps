@@ -3,6 +3,7 @@ package com.example.chefchomps.logica
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
+import com.example.chefchomps.model.Usuario
 
 /**
  * Representa un usuario con sus datos básicos.
@@ -24,8 +25,9 @@ data class Usuario(
  */
 class DatabaseHelper {
 
-    val db = FirebaseFirestore.getInstance()
+    val db = FirebaseFirestore.getInstance();
     internal val auth = FirebaseAuth.getInstance()
+    //ultimo
 
     /**
      * Registra un nuevo usuario en la base de datos.

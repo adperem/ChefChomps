@@ -18,6 +18,10 @@ import androidx.compose.ui.unit.dp
 import com.example.chefchomps.R
 import com.example.chefchomps.ui.RegistroActivity
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import kotlinx.coroutines.delay
 
 /**
  * Actividad principal para la pantalla de inicio de sesión y registro del usuario.
@@ -47,6 +51,8 @@ class Login : ComponentActivity() {
 fun LoginLayout(showToast: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+
     val databaseHelper = remember { DatabaseHelper() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -63,7 +69,6 @@ fun LoginLayout(showToast: (String) -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-
         TextField(
             value = email,
             onValueChange = { email = it },
@@ -77,8 +82,24 @@ fun LoginLayout(showToast: (String) -> Unit) {
             value = password,
             onValueChange = { password = it },
             label = { Text("Contraseña") },
+            visualTransformation = if (showPassword) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                IconButton(onClick = { showPassword = !showPassword }) {
+                    Icon(
+                        painter = painterResource(
+                            if (showPassword) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+                        ),
+                        contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -130,6 +151,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         }
     }
 }
+
 
 /**
  * Previsualización del diseño de la pantalla de inicio de sesión y registro.

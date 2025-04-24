@@ -26,8 +26,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -54,34 +56,64 @@ fun PaginaDetalle(modifier: Modifier,recipe: Recipe
         modifier = modifier.padding(10.dp)
 
     ){
-        innerPadding->Column(modifier=modifier.padding(innerPadding)){
-            Text(recipe.title, textAlign = TextAlign.Center, modifier=modifier.fillMaxWidth(),fontSize=5.em, fontWeight = FontWeight.Bold)
-            Spacer(modifier = Modifier.size(10.dp))
-            AsyncImage(model=recipe.image,
-                placeholder = painterResource(R.drawable.nofoodplaceholder),
-                contentDescription = "Imagen de la receta",
-                onLoading = { println("Cargando imagen...") },
-                onSuccess = { println("Imagen cargada con éxito") },
-                onError = { println("Error al cargar la imagen: ${it.result.throwable}") },
-                modifier = modifier.align(Alignment.CenterHorizontally).fillMaxWidth())
-            Text("INGREDIENTS", textAlign = TextAlign.Center, modifier=modifier.fillMaxWidth(), fontSize =3.em )
-            val state = rememberLazyStaggeredGridState()
-
-            LazyVerticalStaggeredGrid(
-                columns = StaggeredGridCells.Fixed(2),
-                modifier = Modifier.fillMaxWidth(),
-                state = state,
-                content = {
-                    items(recipe.extendedIngredients) {
-                        aux -> Text("-"+aux.name)
+        innerPadding->LazyColumn(modifier=modifier.padding(innerPadding).fillMaxWidth()){
+            item {
+                Text(
+                    recipe.title,
+                    textAlign = TextAlign.Center,
+                    modifier = modifier.fillMaxWidth(),
+                    fontSize = 5.em,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.size(10.dp))
+                AsyncImage(
+                    model = recipe.image,
+                    placeholder = painterResource(R.drawable.nofoodplaceholder),
+                    contentDescription = "Imagen de la receta",
+                    onLoading = { println("Cargando imagen...") },
+                    onSuccess = { println("Imagen cargada con éxito") },
+                    onError = { println("Error al cargar la imagen: ${it.result.throwable}") },
+                    modifier = modifier.fillMaxWidth(),
+                    contentScale = ContentScale.Crop
+                )
+                Spacer(modifier = Modifier.size(20.dp))
+                Text(
+                    "INGREDIENTS",
+                    textAlign = TextAlign.Center,
+                    modifier = modifier.fillMaxWidth(),
+                    fontSize = 4.em,
+                    fontWeight = FontWeight.Bold,
+                )
+                Spacer(modifier = Modifier.size(10.dp))
+  //              val state = rememberLazyStaggeredGridState()
+            }
+           items(recipe.extendedIngredients) { aux ->
+                Text("        - " + aux.name,fontSize = 3.em)
+            }
+        //Intento de que los ingredientes se presenten en dos columnas porque queda mejor
+     /*       item {
+                LazyVerticalStaggeredGrid(
+                    columns = StaggeredGridCells.Fixed(2),
+                    modifier = Modifier.fillMaxWidth(),
+                    content = {
+                        items(recipe.extendedIngredients) { aux ->
+                            Text("-" + aux.name)
+                        }
                     }
-                }
-            )
-            //LazyColumn(modifier=modifier.fillMaxWidth().fillMaxWidth()) {
-            //    items(recipe.extendedIngredients) { aux -> Text("-"+aux.name) }
-           // }
-            Text("INSTRUCTIONS", textAlign = TextAlign.Center, modifier=modifier.fillMaxWidth(), fontSize=3.em )
-            Text(recipe.instructions,Modifier.verticalScroll(rememberScrollState()))
+                )
+            }*/
+            item {
+                Spacer(modifier = Modifier.size(20.dp))
+                Text(
+                    "INSTRUCTIONS",
+                    textAlign = TextAlign.Center,
+                    modifier = modifier.fillMaxWidth(),
+                    fontSize = 4.em,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(modifier = Modifier.size(10.dp))
+                Text(recipe.instructions,fontSize = 3.em,)
+            }
         }
     }
 }

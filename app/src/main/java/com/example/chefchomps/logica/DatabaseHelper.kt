@@ -1,10 +1,16 @@
 package com.example.chefchomps.logica
 
+import android.net.Uri
 import android.util.Log
+import com.example.chefchomps.model.Ingredient
+import com.example.chefchomps.model.Recipe
+import com.example.chefchomps.model.Usuario
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
-import com.example.chefchomps.model.Usuario
+import java.util.UUID
 
 /**
  * Representa un usuario con sus datos básicos.
@@ -223,6 +229,58 @@ class DatabaseHelper {
      */
     fun signOut() {
         auth.signOut()
+    }
+
+    suspend fun subirReceta(
+        titulo: String,
+        imagenUri: Uri?,
+        ingredientes: List<Ingredient>,
+        pasos: List<String>,
+        tiempoPreparacion: Int,
+        descripcion: String,
+        porciones: Int,
+        esVegetariana: Boolean,
+        esVegana: Boolean,
+        tipoPlato: String,
+        glutenFree: Boolean
+    ): Boolean {
+        return try {
+            val userId = auth.currentUser?.uid ?: return false
+
+            val imagenUrl = if (imagenUri != null) {
+                val storageRef = Firebase.storage.reference
+                val imagenRef = storageRef.child("recetas/${UUID.randomUUID()}")
+                val uploadTask = imagenRef.putFile(imagenUri).await()
+                imagenRef.downloadUrl.await().toString()
+            } else {
+                null
+            }
+
+            val receta = Recipe(
+                title = titulo,
+                image = imagenUrl,
+                servings = porciones,
+                readyInMinutes = tiempoPreparacion,
+                instructions = pasos.joinToString("\n"),
+                extendedIngredients = ingredientes,
+                vegetarian = esVegetariana,
+                vegan = esVegana,
+                dishTypes = listOf(tipoPlato),
+                summary = descripcion,
+                userId = userId,
+                glutenFree = glutenFree
+            )
+
+            db.collection("recetas")
+                .document()
+                .set(receta)
+                .await()
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
 }

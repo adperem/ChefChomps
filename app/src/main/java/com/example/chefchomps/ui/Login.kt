@@ -1,4 +1,4 @@
-package com.example.chefchomps.logica
+package com.example.chefchomps.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,14 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.chefchomps.ui.RegistroActivity
 import kotlinx.coroutines.launch
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.example.chefchomps.R
-import com.example.chefchomps.ui.PasswordResetActivity
+import com.example.chefchomps.logica.DatabaseHelper
 
 /**
  * Actividad principal para la pantalla de inicio de sesión y registro del usuario.

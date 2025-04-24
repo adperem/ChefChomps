@@ -1,47 +1,39 @@
 package com.example.chefchomps.model
 
+import java.util.Date
+
 /**
  * Clase que contiene todos los datos de la receta que usa ApiService
  */
 data class Recipe(
-    val id: Int,
+    val id: Int? = null,
     val title: String,
-    val image: String,
-    val imageType: String,
-    val servings: Int,
-    val readyInMinutes: Int,
-    val cookingMinutes: Int?,
-    val preparationMinutes: Int?,
-    val license: String?,
-    val sourceName: String,
-    val sourceUrl: String,
-    val spoonacularSourceUrl: String,
-    val healthScore: Double,
-    val spoonacularScore: Double,
-    val pricePerServing: Double,
-    val analyzedInstructions: List<Instruction>, // Cambiado a List<Instruction>
-    val cheap: Boolean,
-    val creditsText: String,
-    val cuisines: List<String>,
-    val dairyFree: Boolean,
-    val diets: List<String>,
-    val gaps: String,
-    val glutenFree: Boolean,
-    val instructions: String,
-    val ketogenic: Boolean,
-    val lowFodmap: Boolean,
-    val occasions: List<String>,
-    val sustainable: Boolean,
+    val image: String? = null,
+    val servings: Int? = null,
+    val readyInMinutes: Int? = null,
+    val cookingMinutes: Int? = null,
+    val preparationMinutes: Int? = null,
+    val healthScore: Double? = null,
+    val spoonacularScore: Double? = null,
+    val pricePerServing: Double? = null,
+    val analyzedInstructions: List<Instruction>? = null,
+    val cheap: Boolean? = null,
+    val cuisines: List<String>? = null,
+    val dairyFree: Boolean? = null,
+    val diets: List<String>? = null,
+    val glutenFree: Boolean? = null,
+    val instructions: String? = null,
+    val ketogenic: Boolean? = null,
+    val lowFodmap: Boolean? = null,
     val vegan: Boolean,
-    val vegetarian: Boolean,
-    val veryHealthy: Boolean,
-    val veryPopular: Boolean,
-    val whole30: Boolean,
-    val weightWatcherSmartPoints: Int,
-    val dishTypes: List<String>,
-    val extendedIngredients: List<Ingredient>,
-    val summary: String,
-    val winePairing: WinePairing
+    val vegetarian: Boolean? = null,
+    val veryHealthy: Boolean? = null,
+    val veryPopular: Boolean? = null,
+    val dishTypes: List<String>? = null,
+    val extendedIngredients: List<Ingredient>? = null,
+    val summary: String? = null,
+    val userId: String? = null,
+    val createdAt: Date = Date()
 )
 
 /**

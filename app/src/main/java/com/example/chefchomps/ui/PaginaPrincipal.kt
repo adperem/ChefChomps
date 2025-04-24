@@ -34,6 +34,7 @@ import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -44,6 +45,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -81,6 +83,7 @@ class PaginaPrincipal :ComponentActivity(){
      * @param modifier modificador que define comportamiento
      * @param uiState contiene todos los datos relacionados con la página principal
      * */
+    @OptIn(ExperimentalMaterial3Api::class)
     @SuppressLint("NotConstructor")
     @Preview
     @Composable
@@ -92,6 +95,7 @@ class PaginaPrincipal :ComponentActivity(){
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
         val state = rememberScrollState()
+        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
             topBar = {
                 Column{
@@ -136,6 +140,7 @@ class PaginaPrincipal :ComponentActivity(){
                 }
             },
             modifier = modifier.padding(10.dp)
+                    .nestedScroll(scrollBehavior.nestedScrollConnection)
 
         ){
             innerPadding->

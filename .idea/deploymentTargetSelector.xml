@@ -16,10 +16,10 @@
       <SelectionState runConfigName="Login">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="Login (1)">
+      <SelectionState runConfigName="Login">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
-      <SelectionState runConfigName="Login">
+      <SelectionState runConfigName="NuevaReceta">
         <option name="selectionMode" value="DROPDOWN" />
       </SelectionState>
     </selectionStates>

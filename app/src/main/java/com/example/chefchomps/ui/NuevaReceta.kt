@@ -1,7 +1,10 @@
 package com.example.chefchomps.ui
 
 import android.net.Uri
+import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,8 +18,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -50,6 +53,17 @@ import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.model.Ingredient
 import kotlinx.coroutines.launch
 
+class NuevaReceta : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            MaterialTheme {
+                NuevaRecetaScreen(onBack = { finish() })
+            }
+        }
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaRecetaScreen(onBack: () -> Unit) {
@@ -59,12 +73,14 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
     var pasos by remember { mutableStateOf(listOf("")) }
     var tiempoPreparacion by remember { mutableStateOf("") }
     var porciones by remember { mutableStateOf("") }
+    var descripcion by remember { mutableStateOf("") }
     var esVegetariana by remember { mutableStateOf(false) }
     var esVegana by remember { mutableStateOf(false) }
     var tipoPlato by remember { mutableStateOf("Principal") }
     var isLoading by remember { mutableStateOf(false) }
     var glutenFree by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
     val databaseHelper = remember { DatabaseHelper() }
     val coroutineScope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
@@ -81,7 +97,7 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                 title = { Text("Nueva Receta") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 }
             )
@@ -101,6 +117,16 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                     onValueChange = { titulo = it },
                     label = { Text("Título*") },
                     modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            item {
+                OutlinedTextField(
+                    value = descripcion,
+                    onValueChange = { descripcion = it },
+                    label = { Text("Descripción") },
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 3
                 )
             }
 
@@ -149,16 +175,18 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                                 modifier = Modifier.fillMaxWidth(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
-                            OutlinedTextField(
-                                value = ingrediente.unit,
-                                onValueChange = { newValue ->
-                                    ingredientes = ingredientes.toMutableList().apply {
-                                        this[index] = ingrediente.copy(unit = newValue)
-                                    }
-                                },
-                                label = { Text("Unidad (ej. taza, cucharada)") },
-                                modifier = Modifier.fillMaxWidth()
-                            )
+                            ingrediente.unit?.let {
+                                OutlinedTextField(
+                                    value = it,
+                                    onValueChange = { newValue ->
+                                        ingredientes = ingredientes.toMutableList().apply {
+                                            this[index] = ingrediente.copy(unit = newValue)
+                                        }
+                                    },
+                                    label = { Text("Unidad (ej. taza, cucharada)") },
+                                    modifier = Modifier.fillMaxWidth()
+                                )
+                            }
 
                             if (index > 0) {
                                 IconButton(

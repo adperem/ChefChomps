@@ -33,7 +33,19 @@ data class Recipe(
     val extendedIngredients: List<Ingredient>? = null,
     val summary: String? = null,
     val userId: String? = null,
-    val createdAt: Date = Date()
+    val createdAt: Date = Date(),
+    val winePairing: WinePairing? = null,
+    val whole30: Boolean? = null,
+    val weightWatcherSmartPoints: Int? = null,
+    val occasions: List<String>? = null,
+    val sustainable: Boolean? = null,
+    val gaps: String? = null,
+    val creditsText: String? = null,
+    val license: String? = null,
+    val sourceName: String? = null,
+    val sourceUrl: String? = null,
+    val spoonacularSourceUrl: String? = null,
+    val imageType: String? = null
 )
 
 /**

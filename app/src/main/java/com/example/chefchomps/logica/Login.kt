@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.foundation.Image
 import androidx.compose.ui.res.painterResource
 import com.example.chefchomps.R
+import com.example.chefchomps.ui.PasswordResetActivity
 
 /**
  * Actividad principal para la pantalla de inicio de sesión y registro del usuario.
@@ -130,18 +131,8 @@ fun LoginLayout(showToast: (String) -> Unit) {
 
         Button(
             onClick = {
-                coroutineScope.launch {
-                    if (email.isBlank()) {
-                        showToast("Introduce un email válido")
-                    } else {
-                        val passwordRecuperada = databaseHelper.recoverPassword(email)
-                        if (passwordRecuperada != null) {
-                            showToast("Tu contraseña es: $passwordRecuperada")
-                        } else {
-                            showToast("Email no encontrado")
-                        }
-                    }
-                }
+                val intent = Intent(context, PasswordResetActivity::class.java)
+                context.startActivity(intent)
             },
             modifier = Modifier.fillMaxWidth()
         ) {

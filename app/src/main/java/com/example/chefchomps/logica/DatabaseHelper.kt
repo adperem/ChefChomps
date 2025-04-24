@@ -1,5 +1,6 @@
 package com.example.chefchomps.logica
 
+import android.util.Log
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.tasks.await
@@ -27,7 +28,11 @@ class DatabaseHelper {
 
     val db = FirebaseFirestore.getInstance();
     internal val auth = FirebaseAuth.getInstance()
-    //ultimo
+
+    companion object {
+        private const val RESET_CODE_VALIDITY_MINUTES = 15
+        private const val RESET_CODE_LENGTH = 6
+    }
 
     /**
      * Registra un nuevo usuario en la base de datos.
@@ -100,18 +105,83 @@ class DatabaseHelper {
         }
     }
 
-    suspend fun recoverPassword(email: String): String? {
+    suspend fun generateAndSendResetCode(email: String): Boolean {
         return try {
-            val querySnapshot = db.collection("usuarios")
+            val user = db.collection("usuarios")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+                .documents
+                .firstOrNull()
+
+            if (user == null) return false
+
+            val resetCode = (100000..999999).random().toString()
+
+            db.collection("passwordResetCodes").document(email).set(
+                mapOf(
+                    "code" to resetCode,
+                    "timestamp" to System.currentTimeMillis(),
+                    "used" to false
+                )
+            ).await()
+
+            sendResetCodeByEmail(email, resetCode)
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    private fun sendResetCodeByEmail(email: String, code: String) {
+        Log.d("ResetPassword", "Código para $email: $code")
+    }
+
+    suspend fun verifyResetCode(email: String, code: String): Boolean {
+        return try {
+            val snapshot = db.collection("passwordResetCodes")
+                .document(email)
+                .get()
+                .await()
+
+            if (!snapshot.exists()) return false
+
+            val storedCode = snapshot.getString("code")
+            val timestamp = snapshot.getLong("timestamp") ?: 0
+            val isUsed = snapshot.getBoolean("used") ?: true
+
+            storedCode == code &&
+                    !isUsed &&
+                    (System.currentTimeMillis() - timestamp) < RESET_CODE_VALIDITY_MINUTES * 60 * 1000
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun updatePasswordWithResetCode(email: String, code: String, newPassword: String): Boolean {
+        return try {
+            if (!verifyResetCode(email, code)) return false
+
+            val query = db.collection("usuarios")
                 .whereEqualTo("email", email)
                 .get()
                 .await()
 
-            val usuario = querySnapshot.documents.firstOrNull()?.toObject(Usuario::class.java)
-            usuario?.password
+            if (query.isEmpty) return false
+
+            db.collection("passwordResetCodes")
+                .document(email)
+                .update("used", true)
+                .await()
+
+            val docRef = query.documents[0].reference
+            docRef.update("password", newPassword).await()
+
+            true
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            false
         }
     }
 

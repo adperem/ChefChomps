@@ -33,6 +33,10 @@
 
         </activity>
         <activity android:name=".ui.RegistroActivity" />
+        <activity
+            android:name=".ui.PasswordResetActivity"
+            android:exported="false"
+            android:theme="@style/Theme.ChefChomps" />
     </application>
 
 </manifest>

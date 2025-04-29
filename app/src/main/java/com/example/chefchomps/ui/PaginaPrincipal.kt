@@ -77,6 +77,7 @@ import com.example.chefchomps.ui.Login
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.ui.profile.ProfileScreen
 import com.example.chefchomps.ui.profile.ProfileViewModel
+import com.example.chefchomps.persistencia.MockerRecetas
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -113,7 +114,7 @@ class PaginaPrincipal :ComponentActivity(){
         var showProfile by remember { mutableStateOf(false) }
         val profileViewModel = remember { ProfileViewModel() }
 
-        uiState.updatelist(runBlocking { getRandomRecipe() } )
+        //uiState.updatelist(runBlocking { getRandomRecipe() } )
         var text by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
@@ -121,88 +122,62 @@ class PaginaPrincipal :ComponentActivity(){
         val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
             topBar = {
-                TopAppBar(
-                    title = { Text("ChefChomps") },
-                    actions = {
-                        IconButton(onClick = { showMenu = !showMenu }) {
-                            Icon(Icons.Default.Menu, contentDescription = "Menú")
-                        }
-                        DropdownMenu(
-                            expanded = showMenu,
-                            onDismissRequest = { showMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Perfil") },
-                                onClick = {
-                                    showMenu = false
-                                    showProfile = true
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Person, contentDescription = "Perfil")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Buscar") },
-                                onClick = {
-                                    showMenu = false
-                                    context.startActivity(Intent(context, Search::class.java))
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Search, contentDescription = "Buscar")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Nueva Receta") },
-                                onClick = {
-                                    showMenu = false
-                                    context.startActivity(Intent(context, NuevaReceta::class.java))
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Add, contentDescription = "Nueva Receta")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Cerrar Sesión") },
-                                onClick = {
-                                    showMenu = false
-                                    databaseHelper.signOut()
-                                    context.startActivity(Intent(context, Login::class.java))
-                                },
-                                leadingIcon = {
-                                    Icon(Icons.Default.ExitToApp, contentDescription = "Cerrar Sesión")
-                                }
-                            )
-                        }
-                    }
+                Column{
+                Row(verticalAlignment=Alignment.CenterVertically){
+                    Image(painter = painterResource(R.drawable.menuicon), contentDescription = "",
+                        modifier=modifier
+                        .size(30.dp)
+                    )
+                    Image(painter = painterResource(R.drawable.chomper), contentDescription = "",modifier=modifier
+                        .size(100.dp))
+
+                    Text(text="CHEF CHOMPS", maxLines = 1, textAlign = TextAlign.Center,modifier=modifier .fillMaxWidth(),
+                        fontSize = 7.em, fontWeight = FontWeight.Bold)
+                }
+                Row(modifier = Modifier.fillMaxWidth()
+                    .verticalScroll(state)){
+                TextField(
+                    value = text,
+                    onValueChange = { text = it },
+                    label = { Text("Buscar") },
+                    keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            uiState.clear()
+                            uiState.updatelist(runBlocking {autocompleteRecipes(text)})
+                            focusManager.clearFocus()
+                            text=""
+                        }),
+                    modifier = Modifier.focusRequester(textFieldFocusRequester)
                 )
+                IconButton(onClick = {
+                    uiState.clear()
+                    uiState.updatelist(runBlocking {autocompleteRecipes(text)})
+                    focusManager.clearFocus()
+                    text=""
+                }) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.lupa),
+                        contentDescription = "back icon",
+                    )
+                }}
+                }
             },
             modifier = modifier.padding(10.dp)
                     .nestedScroll(scrollBehavior.nestedScrollConnection)
 
         ){
-            paddingValues->
-            Box(modifier = Modifier.padding(paddingValues)) {
-                if (showProfile) {
-                    ProfileScreen(
-                        viewModel = profileViewModel,
-                        onNavigateToLogin = {
-                            showProfile = false
-                            context.startActivity(Intent(context, Login::class.java))
-                        }
-                    )
-                } else {
-                    LazyColumn(modifier=modifier
-                        .padding(paddingValues)
-                        .fillMaxWidth()) {
-                        items(
-                            items=uiState.getlist(),
-                            key={
-                                item->item.title
-                            }
-                        ){
-                            aux->RowReceta(aux)
-                        }
+            innerPadding->
+            LazyColumn(modifier=modifier
+                .padding(innerPadding)
+                .fillMaxWidth()) {
+                items(
+                    items= MockerRecetas.Recetas(),
+                    key={
+                        item->item.title
                     }
+                ){
+                    aux->RowReceta(aux)
                 }
             }
         }

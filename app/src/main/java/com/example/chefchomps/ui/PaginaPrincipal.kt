@@ -118,10 +118,9 @@ class PaginaPrincipal :ComponentActivity(){
         var text by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
-        val state = rememberScrollState()
-        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
             topBar = {
+                Column{
                 TopAppBar(
                     title = { Text("ChefChomps") },
                     actions = {
@@ -176,9 +175,22 @@ class PaginaPrincipal :ComponentActivity(){
                         }
                     }
                 )
-            },
+                    Row(modifier = Modifier.fillMaxWidth()){
+                        TextField(
+                            value = text,
+                            onValueChange = { text = it },
+                            label = { Text("Buscar") },
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
+                            keyboardActions = KeyboardActions(
+                                onDone = {
+                                    uiState.clear()
+                                    uiState.updatelist(runBlocking {autocompleteRecipes(text)})
+                                    focusManager.clearFocus()
+                                    text=""}
+                            ))
+                }
+            }},
             modifier = modifier.padding(10.dp)
-                .nestedScroll(scrollBehavior.nestedScrollConnection)
 
         ){
                 paddingValues->

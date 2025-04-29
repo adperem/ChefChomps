@@ -1,4 +1,4 @@
-package com.example.chefchomps.logica
+package com.example.chefchomps.ui
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,8 +13,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.example.chefchomps.ui.RegistroActivity
 import kotlinx.coroutines.launch
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.example.chefchomps.R
+import com.example.chefchomps.logica.DatabaseHelper
 
 /**
  * Actividad principal para la pantalla de inicio de sesión y registro del usuario.
@@ -44,6 +49,8 @@ class Login : ComponentActivity() {
 fun LoginLayout(showToast: (String) -> Unit) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var showPassword by remember { mutableStateOf(false) }
+
     val databaseHelper = remember { DatabaseHelper() }
     val coroutineScope = rememberCoroutineScope()
 
@@ -54,6 +61,12 @@ fun LoginLayout(showToast: (String) -> Unit) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
+        Image(painter = painterResource(R.drawable.chomper), contentDescription = "")
+
+        Text("INICIAR SESIÓN", style = MaterialTheme.typography.headlineMedium)
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         TextField(
             value = email,
             onValueChange = { email = it },
@@ -67,8 +80,24 @@ fun LoginLayout(showToast: (String) -> Unit) {
             value = password,
             onValueChange = { password = it },
             label = { Text("Contraseña") },
+            visualTransformation = if (showPassword) {
+                VisualTransformation.None
+            } else {
+                PasswordVisualTransformation()
+            },
+            trailingIcon = {
+                IconButton(onClick = { showPassword = !showPassword }) {
+                    Icon(
+                        painter = painterResource(
+                            if (showPassword) R.drawable.ic_visibility_off else R.drawable.ic_visibility
+                        ),
+                        contentDescription = if (showPassword) "Ocultar contraseña" else "Mostrar contraseña"
+                    )
+                }
+            },
             modifier = Modifier.fillMaxWidth()
         )
+
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -101,18 +130,8 @@ fun LoginLayout(showToast: (String) -> Unit) {
 
         Button(
             onClick = {
-                coroutineScope.launch {
-                    if (email.isBlank()) {
-                        showToast("Introduce un email válido")
-                    } else {
-                        val passwordRecuperada = databaseHelper.recoverPassword(email)
-                        if (passwordRecuperada != null) {
-                            showToast("Tu contraseña es: $passwordRecuperada")
-                        } else {
-                            showToast("Email no encontrado")
-                        }
-                    }
-                }
+                val intent = Intent(context, PasswordResetActivity::class.java)
+                context.startActivity(intent)
             },
             modifier = Modifier.fillMaxWidth()
         ) {
@@ -120,6 +139,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
         }
     }
 }
+
 
 /**
  * Previsualización del diseño de la pantalla de inicio de sesión y registro.

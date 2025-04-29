@@ -41,18 +41,15 @@ class ViewModelPaginaPrincipal(): ViewModel() {
      * @param list es el resultado de una lista de recetas
      */
     fun updatelist(
-        list: Result<List<Recipe>> =runBlocking{ApiCLient.findRecipesByIngredients(
-            ingredients = List<String>(10,{"pineapple"})
+        list: List<Recipe> =runBlocking{
+            ApiCLient.findRecipesByIngredients(ingredients = List<String>(10,{"pineapple"})
         )}
     ){
         _uiState.update{
                 currentstate:UIPrincipalPageData->
             val lrecip:MutableList<Recipe> =ArrayList()
             lrecip.addAll(currentstate.lrecipe)
-            val rec : Result<List<Recipe>> = list;
-            if(rec.isSuccess){
-                rec.getOrNull()?.let { it1 -> lrecip.addAll(it1) } }
-
+            lrecip.addAll(list)
             currentstate.copy(lrecipe=lrecip)
 
         }
@@ -64,4 +61,5 @@ class ViewModelPaginaPrincipal(): ViewModel() {
     fun getlist():List<Recipe>{
         return uiState.value.lrecipe
     }
+
 }

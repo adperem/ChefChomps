@@ -1,16 +1,44 @@
 package com.example.chefchomps.logica
 
+import android.net.Uri
+import android.util.Log
+import com.example.chefchomps.model.Ingredient
+import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
+import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
+import java.util.UUID
+
+/**
+ * Representa un usuario con sus datos básicos.
+ *
+ * @param email Correo electrónico del usuario.
+ * @param nombre Nombre del usuario.
+ * @param apellidos Apellidos del usuario.
+ * @param password Contraseña del usuario.
+ */
+data class Usuario(
+    val email: String = "",
+    val nombre: String = "",
+    val apellidos: String = "",
+    val password: String = ""
+)
 
 /**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.
  */
 class DatabaseHelper {
+
+    val db = FirebaseFirestore.getInstance();
     internal val auth = FirebaseAuth.getInstance()
-    internal val db = FirebaseFirestore.getInstance()
+
+    companion object {
+        private const val RESET_CODE_VALIDITY_MINUTES = 15
+        private const val RESET_CODE_LENGTH = 6
+    }
 
     /**
      * Registra un nuevo usuario en la base de datos.
@@ -19,11 +47,10 @@ class DatabaseHelper {
      * @param password Contraseña del usuario.
      * @param nombre Nombre del usuario.
      * @param apellidos Apellidos del usuario.
-     * @return Resultado del registro.
+     * @return 'true' si el registro fue exitoso, 'false' en caso de error.
      */
     suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): RegistroResultado {
         return try {
-            // Verificar si el email ya está registrado
             val snapshot = db.collection("usuarios")
                 .whereEqualTo("email", email)
                 .get()
@@ -33,15 +60,23 @@ class DatabaseHelper {
                 return RegistroResultado.EMAIL_YA_REGISTRADO
             }
 
-            // Crear usuario en Firebase Auth
-            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
-            val userId = authResult.user?.uid ?: throw Exception("Error al crear usuario")
+            val userId = db.runTransaction { transaction ->
+                val metadataRef = db.collection("metadata").document("contadorUsuarios")
+                val metadataSnapshot = transaction.get(metadataRef)
 
-            // Guardar datos adicionales en Firestore
+                val ultimoId = metadataSnapshot.getLong("ultimoId") ?: 0
+                val nuevoId = ultimoId + 1
+
+                transaction.update(metadataRef, "ultimoId", nuevoId)
+
+                "userId$nuevoId"
+            }.await()
+
             val usuario = Usuario(email, nombre, apellidos, password)
             db.collection("usuarios").document(userId).set(usuario).await()
 
             RegistroResultado.EXITO
+
         } catch (e: Exception) {
             e.printStackTrace()
             RegistroResultado.ERROR
@@ -55,7 +90,7 @@ class DatabaseHelper {
     }
 
     /**
-     * Inicia sesión verificando las credenciales del usuario.
+     * Inicia sesion verificando las credenciales del usuario.
      *
      * @param email Correo electrónico del usuario.
      * @param password Contraseña del usuario.
@@ -63,7 +98,42 @@ class DatabaseHelper {
      */
     suspend fun loginUser(email: String, password: String): Boolean {
         return try {
-            auth.signInWithEmailAndPassword(email, password).await()
+            val querySnapshot = db.collection("usuarios")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+
+            val usuario = querySnapshot.documents.firstOrNull()?.toObject(Usuario::class.java)
+            usuario?.password == password
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun generateAndSendResetCode(email: String): Boolean {
+        return try {
+            val user = db.collection("usuarios")
+                .whereEqualTo("email", email)
+                .get()
+                .await()
+                .documents
+                .firstOrNull()
+
+            if (user == null) return false
+
+            val resetCode = (100000..999999).random().toString()
+
+            db.collection("passwordResetCodes").document(email).set(
+                mapOf(
+                    "code" to resetCode,
+                    "timestamp" to System.currentTimeMillis(),
+                    "used" to false
+                )
+            ).await()
+
+            sendResetCodeByEmail(email, resetCode)
+
             true
         } catch (e: Exception) {
             e.printStackTrace()
@@ -71,24 +141,53 @@ class DatabaseHelper {
         }
     }
 
-    /**
-     * Recupera la contraseña del usuario.
-     *
-     * @param email Correo electrónico del usuario.
-     * @return La contraseña del usuario si existe, null en caso contrario.
-     */
-    suspend fun recoverPassword(email: String): String? {
+    private fun sendResetCodeByEmail(email: String, code: String) {
+        Log.d("ResetPassword", "Código para $email: $code")
+    }
+
+    suspend fun verifyResetCode(email: String, code: String): Boolean {
         return try {
-            val querySnapshot = db.collection("usuarios")
+            val snapshot = db.collection("passwordResetCodes")
+                .document(email)
+                .get()
+                .await()
+
+            if (!snapshot.exists()) return false
+
+            val storedCode = snapshot.getString("code")
+            val timestamp = snapshot.getLong("timestamp") ?: 0
+            val isUsed = snapshot.getBoolean("used") ?: true
+
+            storedCode == code &&
+                    !isUsed &&
+                    (System.currentTimeMillis() - timestamp) < RESET_CODE_VALIDITY_MINUTES * 60 * 1000
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    suspend fun updatePasswordWithResetCode(email: String, code: String, newPassword: String): Boolean {
+        return try {
+            if (!verifyResetCode(email, code)) return false
+
+            val query = db.collection("usuarios")
                 .whereEqualTo("email", email)
                 .get()
                 .await()
 
-            val usuario = querySnapshot.documents.firstOrNull()?.toObject(Usuario::class.java)
-            usuario?.password
+            if (query.isEmpty) return false
+
+            db.collection("passwordResetCodes")
+                .document(email)
+                .update("used", true)
+                .await()
+
+            val docRef = query.documents[0].reference
+            docRef.update("password", newPassword).await()
+
+            true
         } catch (e: Exception) {
-            e.printStackTrace()
-            null
+            false
         }
     }
 
@@ -97,10 +196,10 @@ class DatabaseHelper {
      *
      * @return El usuario actual o null si no hay usuario autenticado.
      */
-    fun getCurrentUser(): Usuario? {
+    fun getCurrentUser(): com.example.chefchomps.model.Usuario? {
         val firebaseUser = auth.currentUser
         return if (firebaseUser != null) {
-            Usuario(
+            com.example.chefchomps.model.Usuario(
                 email = firebaseUser.email ?: "",
                 nombre = "",  // Estos campos se cargarán desde Firestore
                 apellidos = "",
@@ -114,11 +213,11 @@ class DatabaseHelper {
      *
      * @return El perfil completo del usuario o null si no está autenticado.
      */
-    suspend fun getUserProfile(): Usuario? {
+    suspend fun getUserProfile(): com.example.chefchomps.model.Usuario? {
         val userId = auth.currentUser?.uid ?: return null
         return try {
             val doc = db.collection("usuarios").document(userId).get().await()
-            doc.toObject(Usuario::class.java)
+            doc.toObject(com.example.chefchomps.model.Usuario::class.java)
         } catch (e: Exception) {
             e.printStackTrace()
             null
@@ -131,4 +230,57 @@ class DatabaseHelper {
     fun signOut() {
         auth.signOut()
     }
+
+    suspend fun subirReceta(
+        titulo: String,
+        imagenUri: Uri?,
+        ingredientes: List<Ingredient>,
+        pasos: List<String>,
+        tiempoPreparacion: Int,
+        descripcion: String,
+        porciones: Int,
+        esVegetariana: Boolean,
+        esVegana: Boolean,
+        tipoPlato: String,
+        glutenFree: Boolean
+    ): Boolean {
+        return try {
+            val userId = auth.currentUser?.uid ?: return false
+
+            val imagenUrl = if (imagenUri != null) {
+                val storageRef = Firebase.storage.reference
+                val imagenRef = storageRef.child("recetas/${UUID.randomUUID()}")
+                val uploadTask = imagenRef.putFile(imagenUri).await()
+                imagenRef.downloadUrl.await().toString()
+            } else {
+                null
+            }
+
+            val receta = Recipe(
+                title = titulo,
+                image = imagenUrl,
+                servings = porciones,
+                readyInMinutes = tiempoPreparacion,
+                instructions = pasos.joinToString("\n"),
+                extendedIngredients = ingredientes,
+                vegetarian = esVegetariana,
+                vegan = esVegana,
+                dishTypes = listOf(tipoPlato),
+                summary = descripcion,
+                userId = userId,
+                glutenFree = glutenFree
+            )
+
+            db.collection("recetas")
+                .document()
+                .set(receta)
+                .await()
+
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
 }

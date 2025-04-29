@@ -25,7 +25,7 @@ data class Recipe(
     val instructions: String? = null,
     val ketogenic: Boolean? = null,
     val lowFodmap: Boolean? = null,
-    val vegan: Boolean,
+    val vegan: Boolean? = null,
     val vegetarian: Boolean? = null,
     val veryHealthy: Boolean? = null,
     val veryPopular: Boolean? = null,

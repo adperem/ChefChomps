@@ -26,21 +26,24 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".ui.Login"
+            android:name=".logica.Login"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.ChefChomps">
+
         </activity>
         <activity android:name=".ui.RegistroActivity" />
-        <activity
-            android:name=".ui.PasswordResetActivity"
-            android:exported="false"
-            android:theme="@style/Theme.ChefChomps" />
-        <activity
-            android:name=".ui.NuevaReceta"
+        <activity android:name=".ui.Search"
             android:exported="true"
+            android:label="@string/app_name"
             android:theme="@style/Theme.ChefChomps">
+        <intent-filter>
+            <action android:name="android.intent.action.MAIN" />
+
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
         </activity>
+
     </application>
 
 </manifest>

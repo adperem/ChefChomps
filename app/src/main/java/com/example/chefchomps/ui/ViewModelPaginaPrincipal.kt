@@ -41,8 +41,8 @@ class ViewModelPaginaPrincipal(): ViewModel() {
      * @param list es el resultado de una lista de recetas
      */
     fun updatelist(
-        list: List<Recipe> =runBlocking{ApiCLient.findRecipesByIngredients(
-            ingredients = List<String>(10,{"pineapple"})
+        list: List<Recipe> =runBlocking{
+            ApiCLient.findRecipesByIngredients(ingredients = List<String>(10,{"pineapple"})
         )}
     ){
         _uiState.update{
@@ -61,4 +61,5 @@ class ViewModelPaginaPrincipal(): ViewModel() {
     fun getlist():List<Recipe>{
         return uiState.value.lrecipe
     }
+
 }

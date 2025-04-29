@@ -58,11 +58,17 @@ class Search :ComponentActivity(){
             }
         }
     }
+
+    /***
+     * Pagina de inicio para la aplicacion
+     * @param uiState modificador que define comportamiento
+     * @param funcion una funcion que recibe una lista de string(ingredientes) y devuelve lista de recetas
+     */
     @SuppressLint("NotConstructor")
     @Composable
     fun Search(
-        uiState:ViewModelPaginaPrincipal,//le pasas el uistate de la pagina principal
-        funcion:(List<String>)->List<Recipe> //le pasas una funcion que devuelve lista de recetas y le pasas lista de string
+        uiState:ViewModelPaginaPrincipal,
+        funcion:(List<String>)->List<Recipe>
     ){
         var text by remember { mutableStateOf("") }
         val lista=mutableListOf<String>()

@@ -87,8 +87,8 @@ fun PaginaDetalle(modifier: Modifier,recipe: Recipe
                 Spacer(modifier = Modifier.size(10.dp))
   //              val state = rememberLazyStaggeredGridState()
             }
-           items(recipe.extendedIngredients) { aux ->
-                Text("        - " + aux.name,fontSize = 3.em)
+            items(recipe.extendedIngredients ?: emptyList()) { aux ->
+                Text("        - " + aux.name, fontSize = 3.em)
             }
         //Intento de que los ingredientes se presenten en dos columnas porque queda mejor
      /*       item {
@@ -112,7 +112,7 @@ fun PaginaDetalle(modifier: Modifier,recipe: Recipe
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.size(10.dp))
-                Text(recipe.instructions,fontSize = 3.em,)
+                recipe.instructions?.let { Text(it,fontSize = 3.em,) }
             }
         }
     }

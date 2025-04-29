@@ -38,7 +38,10 @@ class VerReceta : ComponentActivity() {
             var receta by remember { mutableStateOf<Recipe?>(null) }
 
             LaunchedEffect(Unit) {
-                val result = ApiCLient.getRandomRecipe()
+                val result = getRandomRecipe()
+                receta = result.getOrNull(0)
+
+/*                val result = getRandomRecipe()
                 if (result.isSuccess) {
                     val recetas = result.getOrNull()
                     if (!recetas.isNullOrEmpty()) {
@@ -46,7 +49,7 @@ class VerReceta : ComponentActivity() {
                     }
                 } else {
                     Log.e("VerReceta", "Error obteniendo receta: ${result.exceptionOrNull()}")
-                }
+                }*/
             }
 
             if (receta != null) {

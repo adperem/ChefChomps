@@ -60,6 +60,7 @@ import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.logica.ApiCLient.Companion.autocompleteRecipes
 import com.example.chefchomps.logica.ApiCLient.Companion.getRandomRecipe
 import com.example.chefchomps.model.Recipe
+import com.example.chefchomps.persistencia.MockerRecetas
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -90,12 +91,10 @@ class PaginaPrincipal :ComponentActivity(){
     fun PaginaPrincipal(modifier:Modifier=Modifier,
                 uiState:ViewModelPaginaPrincipal= ViewModelPaginaPrincipal()
     ){
-        uiState.updatelist(runBlocking { getRandomRecipe() } )
+        //uiState.updatelist(runBlocking { getRandomRecipe() } )
         var text by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
-        val state = rememberScrollState()
-        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
         Scaffold(
             topBar = {
                 Column{
@@ -110,8 +109,7 @@ class PaginaPrincipal :ComponentActivity(){
                     Text(text="CHEF CHOMPS", maxLines = 1, textAlign = TextAlign.Center,modifier=modifier .fillMaxWidth(),
                         fontSize = 7.em, fontWeight = FontWeight.Bold)
                 }
-                Row(modifier = Modifier.fillMaxWidth()
-                    .verticalScroll(state)){
+                Row(modifier = Modifier.fillMaxWidth()){
                 TextField(
                     value = text,
                     onValueChange = { text = it },
@@ -140,7 +138,6 @@ class PaginaPrincipal :ComponentActivity(){
                 }
             },
             modifier = modifier.padding(10.dp)
-                    .nestedScroll(scrollBehavior.nestedScrollConnection)
 
         ){
             innerPadding->
@@ -148,7 +145,7 @@ class PaginaPrincipal :ComponentActivity(){
                 .padding(innerPadding)
                 .fillMaxWidth()) {
                 items(
-                    items=uiState.getlist(),
+                    items= MockerRecetas.Recetas(), //uiState.getlist()
                     key={
                         item->item.title
                     }

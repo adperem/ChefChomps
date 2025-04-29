@@ -60,7 +60,10 @@ class Search :ComponentActivity(){
     }
     @SuppressLint("NotConstructor")
     @Composable
-    fun Search(){
+    fun Search(
+        uiState:ViewModelPaginaPrincipal,//le pasas el uistate de la pagina principal
+        funcion:(List<String>)->List<Recipe> //le pasas una funcion que devuelve lista de recetas y le pasas lista de string
+    ){
         var text by remember { mutableStateOf("") }
         val lista=mutableListOf<String>()
         val focusManager = LocalFocusManager.current
@@ -90,7 +93,6 @@ class Search :ComponentActivity(){
                     modifier = Modifier.focusRequester(textFieldFocusRequester)
                 )
                 IconButton(onClick = {
-                    focusManager.clearFocus()
                     lista.add(text)
                     text = ""
                 }) {
@@ -101,7 +103,9 @@ class Search :ComponentActivity(){
                 }
                 IconButton(onClick = {
                     focusManager.clearFocus()
+                    uiState.updatelist(funcion(lista))
                     //Poner aqui codigo para que vaya a la pagina principal
+                    //se añaden recetas en el state
                 }) {
                     Icon(
                         painter = painterResource(id = R.drawable.lupa),

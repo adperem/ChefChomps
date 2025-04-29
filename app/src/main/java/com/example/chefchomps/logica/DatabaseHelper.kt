@@ -7,25 +7,25 @@ import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
 
-/**
- * Representa un usuario con sus datos básicos.
- *
- * @param email Correo electrónico del usuario.
- * @param nombre Nombre del usuario.
- * @param apellidos Apellidos del usuario.
- * @param password Contraseña del usuario.
- */
-data class Usuario(
-    val email: String = "",
-    val nombre: String = "",
-    val apellidos: String = "",
-    val password: String = ""
-)
+///**
+// * Representa un usuario con sus datos básicos.
+// *
+// * @param email Correo electrónico del usuario.
+// * @param nombre Nombre del usuario.
+// * @param apellidos Apellidos del usuario.
+// * @param password Contraseña del usuario.
+// */
+//data class Usuario(
+//    val email: String = "",
+//    val nombre: String = "",
+//    val apellidos: String = ""
+//)
 
 /**
  * Clase para gestionar el registro e inicio de sesión de usuarios en Firebase.
@@ -37,7 +37,6 @@ class DatabaseHelper {
 
     companion object {
         private const val RESET_CODE_VALIDITY_MINUTES = 15
-        private const val RESET_CODE_LENGTH = 6
     }
 
     /**
@@ -51,33 +50,18 @@ class DatabaseHelper {
      */
     suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): RegistroResultado {
         return try {
-            val snapshot = db.collection("usuarios")
-                .whereEqualTo("email", email)
-                .get()
-                .await()
+            val authResult = auth.createUserWithEmailAndPassword(email, password).await()
+            val userId = authResult.user?.uid ?: return RegistroResultado.ERROR
 
-            if (!snapshot.isEmpty) {
-                return RegistroResultado.EMAIL_YA_REGISTRADO
-            }
-
-            val userId = db.runTransaction { transaction ->
-                val metadataRef = db.collection("metadata").document("contadorUsuarios")
-                val metadataSnapshot = transaction.get(metadataRef)
-
-                val ultimoId = metadataSnapshot.getLong("ultimoId") ?: 0
-                val nuevoId = ultimoId + 1
-
-                transaction.update(metadataRef, "ultimoId", nuevoId)
-
-                "userId$nuevoId"
-            }.await()
-
-            val usuario = Usuario(email, nombre, apellidos, password)
+            val usuario = Usuario(email, nombre, apellidos)
             db.collection("usuarios").document(userId).set(usuario).await()
 
             RegistroResultado.EXITO
-
+        } catch (e: FirebaseAuthUserCollisionException) {
+            Log.e("DatabaseHelper", "Correo ya registrado: ${e.message}")
+            RegistroResultado.EMAIL_YA_REGISTRADO
         } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error en registro: ${e.message}")
             e.printStackTrace()
             RegistroResultado.ERROR
         }
@@ -98,14 +82,10 @@ class DatabaseHelper {
      */
     suspend fun loginUser(email: String, password: String): Boolean {
         return try {
-            val querySnapshot = db.collection("usuarios")
-                .whereEqualTo("email", email)
-                .get()
-                .await()
-
-            val usuario = querySnapshot.documents.firstOrNull()?.toObject(Usuario::class.java)
-            usuario?.password == password
+            val authResult = auth.signInWithEmailAndPassword(email, password).await()
+            authResult.user != null
         } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error en login: ${e.message}")
             e.printStackTrace()
             false
         }
@@ -219,7 +199,7 @@ class DatabaseHelper {
             val doc = db.collection("usuarios").document(userId).get().await()
             doc.toObject(com.example.chefchomps.model.Usuario::class.java)
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("DatabaseHelper", "Error al obtener perfil: ${e.message}")
             null
         }
     }
@@ -245,7 +225,7 @@ class DatabaseHelper {
         glutenFree: Boolean
     ): Boolean {
         return try {
-            val userId = auth.currentUser?.uid ?: return false
+            val userId = null// = auth.currentUser?.uid ?: return false
 
             val imagenUrl = if (imagenUri != null) {
                 val storageRef = Firebase.storage.reference

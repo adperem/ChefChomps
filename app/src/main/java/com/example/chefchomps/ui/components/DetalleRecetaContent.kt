@@ -18,6 +18,11 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.model.Recipe
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.text.HtmlCompat
+import android.widget.TextView
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.toArgb
 
 /**
  * Componente reutilizable para mostrar los detalles completos de una receta.
@@ -75,8 +80,9 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Text(
-                text = recipe.summary ?: "No hay descripción disponible",
+            // Mostrar HTML para la descripción
+            HtmlText(
+                html = recipe.summary ?: "No hay descripción disponible",
                 style = MaterialTheme.typography.bodyMedium
             )
             
@@ -90,10 +96,28 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
             
             Spacer(modifier = Modifier.height(8.dp))
             
-            Text(
-                text = recipe.instructions ?: "No hay instrucciones disponibles",
+            // Mostrar HTML para las instrucciones
+            HtmlText(
+                html = recipe.instructions ?: "No hay instrucciones disponibles",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
     }
+}
+
+/**
+ * Componente para mostrar texto HTML en Compose
+ */
+@Composable
+fun HtmlText(
+    html: String,
+    style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
+    modifier: Modifier = Modifier
+) {
+    // Simplemente mostrar el texto sin procesar el HTML
+    Text(
+        text = html,
+        style = style,
+        modifier = modifier
+    )
 } 

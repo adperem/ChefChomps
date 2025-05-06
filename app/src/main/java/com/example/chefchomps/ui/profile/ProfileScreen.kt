@@ -81,6 +81,7 @@ private fun ProfileContent(
     var apellidos by remember { mutableStateOf(usuario.apellidos) }
     var email by remember { mutableStateOf(usuario.email) }
     var password by remember { mutableStateOf(usuario.password) }
+    var username by remember { mutableStateOf(usuario.username) }
     var isEditing by remember { mutableStateOf(false) }
 
     Column(
@@ -112,6 +113,14 @@ private fun ProfileContent(
         )
 
         OutlinedTextField(
+            value = username,
+            onValueChange = { if (isEditing) username = it },
+            label = { Text("Nombre de usuario") },
+            enabled = isEditing,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
             value = email,
             onValueChange = { if (isEditing) email = it },
             label = { Text("Email") },
@@ -135,7 +144,7 @@ private fun ProfileContent(
             Button(
                 onClick = { 
                     if (isEditing) {
-                        onSaveChanges(Usuario(email, nombre, apellidos, password))
+                        onSaveChanges(Usuario(email, nombre, apellidos, password, username))
                     }
                     isEditing = !isEditing 
                 }
@@ -150,6 +159,7 @@ private fun ProfileContent(
                         apellidos = usuario.apellidos
                         email = usuario.email
                         password = usuario.password
+                        username = usuario.username
                         isEditing = false
                     }
                 ) {
@@ -174,7 +184,8 @@ fun ProfileScreenPreview() {
         email = "usuario@ejemplo.com",
         nombre = "Juan",
         apellidos = "Pérez",
-        password = "********"
+        password = "********",
+        username = "juanperez"
     )
     
     ProfileContent(

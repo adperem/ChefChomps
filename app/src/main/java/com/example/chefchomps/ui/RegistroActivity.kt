@@ -62,6 +62,7 @@ fun RegistroLayout(showToast: (String) -> Unit, onBack: () -> Unit) {
     var password by remember { mutableStateOf("") }
     var nombre by remember { mutableStateOf("") }
     var apellido by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     val databaseHelper = remember { DatabaseHelper() }
@@ -155,6 +156,17 @@ fun RegistroLayout(showToast: (String) -> Unit, onBack: () -> Unit) {
                     }
                 }
             )
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = { Text("Nombre de usuario") },
+                modifier = Modifier.fillMaxWidth(),
+                supportingText = {
+                    Text("Opcional: Si no lo rellenas, se generará automáticamente")
+                }
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -173,7 +185,7 @@ fun RegistroLayout(showToast: (String) -> Unit, onBack: () -> Unit) {
                             }
                             else -> {
                                 isLoading = true
-                                val resultado = databaseHelper.registerUser(email, password, nombre, apellido)
+                                val resultado = databaseHelper.registerUser(email, password, nombre, apellido, username)
                                 isLoading = false
                                 when (resultado) {
                                     RegistroResultado.EXITO -> {

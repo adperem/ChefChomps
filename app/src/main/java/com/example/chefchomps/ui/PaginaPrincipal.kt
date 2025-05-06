@@ -42,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -132,14 +133,53 @@ class PaginaPrincipal : ComponentActivity() {
         // Inicializar con recetas aleatorias si no hay recetas en el ViewModel
         LaunchedEffect(Unit) {
             if (uiState.getlist().isEmpty()) {
-                uiState.updatelist(runBlocking { getRandomRecipe() })
+                isSearching = true  // Mostrar indicador de carga mientras se obtienen las recetas
+                try {
+                    val randomRecipes = ApiCLient.getRandomRecipe()
+                    uiState.updatelist(randomRecipes)
+                } catch (e: Exception) {
+                    // Manejar posible error
+                } finally {
+                    isSearching = false  // Ocultar indicador de carga
+                }
             }
         }
 
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text("ChefChomps") },
+                    title = { 
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.clickable {
+                                // Si estamos en una vista diferente a la principal, volvemos a ella
+                                if (showProfile) {
+                                    showProfile = false
+                                }
+                                // Recargar recetas aleatorias si la lista está vacía
+                                if (uiState.getlist().isEmpty()) {
+                                    isSearching = true
+                                    runBlocking {
+                                        try {
+                                            val randomRecipes = ApiCLient.getRandomRecipe()
+                                            uiState.updatelist(randomRecipes)
+                                        } finally {
+                                            isSearching = false
+                                        }
+                                    }
+                                }
+                            }
+                        ) {
+                            Image(
+                                painter = painterResource(id = R.drawable.chomper),
+                                contentDescription = "Logo ChefChomps",
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .padding(end = 8.dp)
+                            )
+                            Text("ChefChomps")
+                        }
+                    },
                     actions = {
                         IconButton(onClick = { showMenu = !showMenu }) {
                             Icon(Icons.Default.Menu, contentDescription = "Menú")
@@ -159,13 +199,23 @@ class PaginaPrincipal : ComponentActivity() {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text("Buscar") },
+                                text = { Text("Filtrar") },
                                 onClick = {
                                     showMenu = false
                                     context.startActivity(Intent(context, Search::class.java))
                                 },
                                 leadingIcon = {
-                                    Icon(Icons.Default.Search, contentDescription = "Buscar")
+                                    Icon(Icons.Default.Search, contentDescription = "Filtar")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Buscar por usuario") },
+                                onClick = {
+                                    showMenu = false
+                                    context.startActivity(Intent(context, BuscarPorUsuario::class.java))
+                                },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Person, contentDescription = "Buscar por usuario")
                                 }
                             )
                             DropdownMenuItem(
@@ -269,6 +319,45 @@ class PaginaPrincipal : ComponentActivity() {
                         }
                         
                         Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Título de sección
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = if (searchText.isEmpty()) "Recetas Recomendadas" else "Resultados de búsqueda",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            
+                            // Botón para recargar recetas aleatorias
+                            if (searchText.isEmpty()) {
+                                IconButton(
+                                    onClick = {
+                                        isSearching = true
+                                        uiState.clear()
+                                        runBlocking {
+                                            try {
+                                                val randomRecipes = ApiCLient.getRandomRecipe()
+                                                uiState.updatelist(randomRecipes)
+                                            } finally {
+                                                isSearching = false
+                                            }
+                                        }
+                                    }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(id = R.drawable.ic_refresh),
+                                        contentDescription = "Recargar recetas",
+                                        modifier = Modifier.size(24.dp)
+                                    )
+                                }
+                            }
+                        }
                         
                         // Lista de recetas
                         RecetasListFromViewModel(

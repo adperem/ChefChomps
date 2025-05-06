@@ -193,25 +193,20 @@ class Search :ComponentActivity(){
                     textAlign = TextAlign.Center
                 )
                 
-                if (recetasEncontradas.isEmpty()) {
-                    Text(
-                        text = "No se encontraron recetas con estos ingredientes",
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        textAlign = TextAlign.Center
-                    )
-                } else {
-                    LazyColumn(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        items(recetasEncontradas) { receta ->
-                            RowReceta(receta)
-                        }
-                    }
-                }
+                RecetasList(
+                    recipes = recetasEncontradas,
+                    isLoading = false,
+                    emptyMessage = "No se encontraron recetas con estos ingredientes",
+                    onRecetaClick = { receta ->
+                        // Navegación a pantalla de detalle
+                        val intent = Intent(context, PaginaDetalle::class.java)
+                        intent.putExtra("receta_id", receta.id)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(horizontal = 16.dp)
+                )
                 
                 Row(
                     modifier = Modifier

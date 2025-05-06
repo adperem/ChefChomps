@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -29,16 +30,19 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -46,7 +50,9 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -76,6 +82,8 @@ import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.persistencia.MockerRecetas
 import com.example.chefchomps.ui.profile.ProfileScreen
 import com.example.chefchomps.ui.profile.ProfileViewModel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 /**
@@ -114,12 +122,19 @@ class PaginaPrincipal : ComponentActivity() {
         var showProfile by remember { mutableStateOf(false) }
         val profileViewModel = remember { ProfileViewModel() }
 
-        //uiState.updatelist(runBlocking { getRandomRecipe() } )
-        var text by remember { mutableStateOf("") }
+        var searchText by remember { mutableStateOf("") }
+        var isSearching by remember { mutableStateOf(false) }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
         val state = rememberScrollState()
         val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
+        // Inicializar con recetas aleatorias si no hay recetas en el ViewModel
+        LaunchedEffect(Unit) {
+            if (uiState.getlist().isEmpty()) {
+                uiState.updatelist(runBlocking { getRandomRecipe() })
+            }
+        }
 
         Scaffold(
             topBar = {
@@ -191,17 +206,84 @@ class PaginaPrincipal : ComponentActivity() {
                         }
                     )
                 } else {
-                    LazyColumn(
-                        modifier = modifier
-                            .padding(paddingValues)
-                            .fillMaxWidth()
-                    ) {
-                        items(
-                            items = MockerRecetas.Recetas(),
-                            key = { item -> item.title }
-                        ) { aux ->
-                            RowReceta(aux)
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        // Barra de búsqueda
+                        OutlinedTextField(
+                            value = searchText,
+                            onValueChange = { searchText = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp)
+                                .focusRequester(textFieldFocusRequester),
+                            placeholder = { Text("Buscar recetas...") },
+                            leadingIcon = { 
+                                Icon(
+                                    Icons.Default.Search,
+                                    contentDescription = "Buscar"
+                                )
+                            },
+                            trailingIcon = {
+                                if (searchText.isNotEmpty()) {
+                                    IconButton(onClick = {
+                                        searchText = ""
+                                        focusManager.clearFocus()
+                                    }) {
+                                        Icon(
+                                            Icons.Default.Clear,
+                                            contentDescription = "Limpiar"
+                                        )
+                                    }
+                                }
+                            },
+                            singleLine = true,
+                            shape = RoundedCornerShape(24.dp),
+                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                            keyboardActions = KeyboardActions(
+                                onSearch = {
+                                    if (searchText.isNotEmpty()) {
+                                        isSearching = true
+                                        focusManager.clearFocus()
+                                        uiState.clear()
+                                        
+                                        // Realizar búsqueda
+                                        val results = runBlocking { 
+                                            autocompleteRecipes(searchText) 
+                                        }
+                                        uiState.updatelist(results)
+                                        isSearching = false
+                                    }
+                                }
+                            )
+                        )
+
+                        // Indicador de carga
+                        if (isSearching) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator()
+                            }
                         }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // Lista de recetas
+                        RecetasListFromViewModel(
+                            viewModel = uiState,
+                            modifier = modifier
+                                .fillMaxWidth(),
+                            onRecetaClick = { receta ->
+                                // Navegación a la pantalla de detalle
+                                val intent = Intent(context, PaginaDetalle::class.java)
+                                intent.putExtra("receta_id", receta.id ?: -1)
+                                intent.putExtra("receta_title", receta.title)
+                                intent.putExtra("receta_image", receta.image ?: "")
+                                context.startActivity(intent)
+                            }
+                        )
                     }
                 }
             }

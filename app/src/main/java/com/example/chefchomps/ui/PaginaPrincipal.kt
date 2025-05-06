@@ -7,7 +7,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.foundation.border
@@ -41,7 +40,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -84,18 +82,19 @@ import kotlinx.coroutines.runBlocking
  * Class que define la página principal de la app ChefChomps
  *
  */
-class PaginaPrincipal :ComponentActivity(){
+class PaginaPrincipal : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ChefChompsTema(darkTheme = false){
-                Surface (modifier = Modifier.fillMaxSize())
-                {
-                    PaginaPrincipal();
+            ChefChompsTema(darkTheme = false) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    PaginaPrincipal()
                 }
-            }}
+            }
+        }
     }
+
     /**
      * Pagina de inicio para la aplicacion
      * @param modifier modificador que define comportamiento
@@ -105,9 +104,10 @@ class PaginaPrincipal :ComponentActivity(){
     @SuppressLint("NotConstructor")
     @Preview
     @Composable
-    fun PaginaPrincipal(modifier:Modifier=Modifier,
-                        uiState:ViewModelPaginaPrincipal= ViewModelPaginaPrincipal()
-    ){
+    fun PaginaPrincipal(
+        modifier: Modifier = Modifier,
+        uiState: ViewModelPaginaPrincipal = ViewModelPaginaPrincipal()
+    ) {
         val context = LocalContext.current
         val databaseHelper = remember { DatabaseHelper() }
         var showMenu by remember { mutableStateOf(false) }
@@ -118,9 +118,11 @@ class PaginaPrincipal :ComponentActivity(){
         var text by remember { mutableStateOf("") }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
+        val state = rememberScrollState()
+        val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
+
         Scaffold(
             topBar = {
-                Column{
                 TopAppBar(
                     title = { Text("ChefChomps") },
                     actions = {
@@ -173,27 +175,12 @@ class PaginaPrincipal :ComponentActivity(){
                                 }
                             )
                         }
-                    }
+                    },
+                    scrollBehavior = scrollBehavior
                 )
-                    Row(modifier = Modifier.fillMaxWidth()){
-                        TextField(
-                            value = text,
-                            onValueChange = { text = it },
-                            label = { Text("Buscar") },
-                            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done),
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    uiState.clear()
-                                    uiState.updatelist(runBlocking {autocompleteRecipes(text)})
-                                    focusManager.clearFocus()
-                                    text=""}
-                            ))
-                }
-            }},
+            },
             modifier = modifier.padding(10.dp)
-
-        ){
-                paddingValues->
+        ) { paddingValues ->
             Box(modifier = Modifier.padding(paddingValues)) {
                 if (showProfile) {
                     ProfileScreen(
@@ -204,16 +191,16 @@ class PaginaPrincipal :ComponentActivity(){
                         }
                     )
                 } else {
-                    LazyColumn(modifier=modifier
-                        .padding(paddingValues)
-                        .fillMaxWidth()) {
+                    LazyColumn(
+                        modifier = modifier
+                            .padding(paddingValues)
+                            .fillMaxWidth()
+                    ) {
                         items(
-                            items= MockerRecetas.Recetas(),
-                            key={
-                                    item->item.title
-                            }
-                        ){
-                                aux->RowReceta(aux)
+                            items = MockerRecetas.Recetas(),
+                            key = { item -> item.title }
+                        ) { aux ->
+                            RowReceta(aux)
                         }
                     }
                 }

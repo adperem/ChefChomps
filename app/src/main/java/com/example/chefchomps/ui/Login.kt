@@ -35,7 +35,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.DatabaseHelper
-import com.example.chefchomps.ui.profile.ProfileActivity
 import kotlinx.coroutines.launch
 
 /**
@@ -135,7 +134,7 @@ fun LoginLayout(showToast: (String) -> Unit) {
                     val success = databaseHelper.loginUser(email, password)
                     if (success) {
                         showToast("Inicio de sesión exitoso")
-                        context.startActivity(Intent(context, ProfileActivity::class.java))
+                        context.startActivity(Intent(context, PaginaPrincipal::class.java))
                         (context as? ComponentActivity)?.finish()
                     } else {
                         showToast("Usuario o contraseña incorrectos")

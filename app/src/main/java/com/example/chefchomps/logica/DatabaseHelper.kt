@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
+import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
@@ -306,6 +307,18 @@ class DatabaseHelper {
         } catch (e: Exception) {
             null
         }
+    }
+
+    /**
+     * Borrar de la base de datos el usuario actual
+     * @return True si te promete borrar el usuario actual y false en el resto de casos
+     */
+    suspend fun borrarCuentaActual() :Boolean{
+        if (auth.currentUser == null) {
+                return false;
+            }
+        db.collection("usuarios").document(auth.currentUser!!.uid).delete();
+        return true;
     }
 
 }

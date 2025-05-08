@@ -310,6 +310,103 @@ class DatabaseHelper {
     }
 
     /**
+     * Busca el ID de un usuario por su nombre de usuario
+     * 
+     * @param nombreUsuario Nombre del usuario a buscar
+     * @return ID del usuario o null si no se encuentra
+     */
+    suspend fun buscarIdUsuarioPorNombre(nombreUsuario: String): String? {
+        return try {
+            val querySnapshot = db.collection("usuarios")
+                .whereEqualTo("username", nombreUsuario)
+                .get()
+                .await()
+
+            if (querySnapshot.isEmpty) {
+                // Si no se encuentra con username exacto, intentamos buscar por nombre
+                val queryByName = db.collection("usuarios")
+                    .whereEqualTo("nombre", nombreUsuario)
+                    .get()
+                    .await()
+                
+                if (queryByName.isEmpty) return null
+                
+                // Devolvemos el ID del documento (que es el ID del usuario)
+                return queryByName.documents.firstOrNull()?.id
+            }
+            
+            // Devolvemos el ID del documento (que es el ID del usuario)
+            querySnapshot.documents.firstOrNull()?.id
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al buscar usuario por nombre: ${e.message}")
+            null
+        }
+    }
+
+    /**
+     * Busca recetas creadas por un usuario específico usando su ID
+     * 
+     * @param userId ID del usuario cuyas recetas se quieren buscar
+     * @return Lista de recetas del usuario o null si ocurre un error
+     */
+    suspend fun buscarRecetasPorIdUsuario(userId: String): List<Recipe>? {
+        return try {
+            val querySnapshot = db.collection("recetas")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+            
+            val recetas = mutableListOf<Recipe>()
+            
+            for (document in querySnapshot.documents) {
+                // Deserialización manual en lugar de usar toObject
+                val id = document.getLong("id")?.toInt()
+                val title = document.getString("title") ?: ""
+                val image = document.getString("image")
+                val servings = document.getLong("servings")?.toInt()
+                val readyInMinutes = document.getLong("readyInMinutes")?.toInt()
+                val instructions = document.getString("instructions")
+                val summary = document.getString("summary")
+                val vegetarian = document.getBoolean("vegetarian") ?: false
+                val vegan = document.getBoolean("vegan") ?: false
+                val glutenFree = document.getBoolean("glutenFree") ?: false
+                
+                // Obtener dishTypes como lista de strings
+                val dishTypesData = document.get("dishTypes") as? List<*>
+                val dishTypes = dishTypesData?.mapNotNull { it as? String } ?: emptyList()
+                
+                // Para ingredientes, creamos una lista vacía ya que es más complejo deserializarlos
+                // Si necesitas los ingredientes, se puede implementar una deserialización más compleja
+                val ingredients = emptyList<Ingredient>()
+                
+                val receta = Recipe(
+                    id = id,
+                    title = title,
+                    image = image,
+                    servings = servings,
+                    readyInMinutes = readyInMinutes,
+                    instructions = instructions,
+                    extendedIngredients = ingredients,
+                    vegetarian = vegetarian,
+                    vegan = vegan,
+                    dishTypes = dishTypes,
+                    summary = summary,
+                    userId = userId,
+                    glutenFree = glutenFree
+                )
+                
+                recetas.add(receta)
+            }
+            
+            recetas
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al buscar recetas por ID de usuario: ${e.message}")
+            e.printStackTrace()
+            null
+        }
+    }
+
+    /**
      * Borrar de la base de datos el usuario actual
      * @return True si te promete borrar el usuario actual y false en el resto de casos
      */

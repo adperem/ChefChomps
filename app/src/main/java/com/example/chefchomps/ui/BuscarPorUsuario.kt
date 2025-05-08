@@ -67,6 +67,7 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
     var searchText by remember { mutableStateOf("") }
     var isSearching by remember { mutableStateOf(false) }
     var userRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    var errorMessage by remember { mutableStateOf<String?>(null) }
     val focusManager = LocalFocusManager.current
     val textFieldFocusRequester = remember { FocusRequester() }
     
@@ -91,7 +92,10 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
             // Campo de búsqueda
             OutlinedTextField(
                 value = searchText,
-                onValueChange = { searchText = it },
+                onValueChange = { 
+                    searchText = it
+                    errorMessage = null
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .focusRequester(textFieldFocusRequester),
@@ -106,6 +110,7 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
                     if (searchText.isNotEmpty()) {
                         IconButton(onClick = {
                             searchText = ""
+                            errorMessage = null
                             focusManager.clearFocus()
                         }) {
                             Icon(
@@ -122,15 +127,27 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
                     onSearch = {
                         if (searchText.isNotEmpty()) {
                             isSearching = true
+                            errorMessage = null
                             focusManager.clearFocus()
                             
-                            // Aquí iría la lógica para buscar recetas por usuario
-                            // Simulamos una búsqueda (esto tendría que implementarse en DatabaseHelper)
+                            // Proceso de búsqueda en dos pasos
                             runBlocking {
                                 try {
-                                    // Simulamos que obtenemos recetas del usuario buscado
-                                    // Esta función tendría que ser implementada realmente
-                                    userRecipes = databaseHelper.buscarRecetasPorUsuario(searchText) ?: emptyList()
+                                    // Paso 1: Buscar el ID del usuario por su nombre
+                                    val userId = databaseHelper.buscarIdUsuarioPorNombre(searchText)
+                                    
+                                    if (userId != null) {
+                                        // Paso 2: Buscar recetas asociadas al ID del usuario
+                                        userRecipes = databaseHelper.buscarRecetasPorIdUsuario(userId) ?: emptyList()
+                                    } else {
+                                        // Usuario no encontrado
+                                        userRecipes = emptyList()
+                                        errorMessage = "Usuario '$searchText' no encontrado"
+                                    }
+                                } catch (e: Exception) {
+                                    // Error en la búsqueda
+                                    userRecipes = emptyList()
+                                    errorMessage = "Error al buscar: ${e.message}"
                                 } finally {
                                     isSearching = false
                                 }
@@ -139,6 +156,16 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
                     }
                 )
             )
+            
+            // Mostrar mensaje de error si existe
+            errorMessage?.let {
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = it,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
             
             Spacer(modifier = Modifier.height(16.dp))
             
@@ -158,8 +185,10 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
                     recipes = userRecipes,
                     emptyMessage = if (searchText.isEmpty()) 
                         "Ingrese un nombre de usuario para buscar sus recetas" 
-                    else 
-                        "No se encontraron recetas para el usuario '$searchText'",
+                    else if (errorMessage == null)
+                        "No se encontraron recetas para el usuario '$searchText'"
+                    else
+                        "",
                     onRecetaClick = { receta ->
                         // Navegación a la pantalla de detalle
                         val intent = Intent(context, PaginaDetalle::class.java)

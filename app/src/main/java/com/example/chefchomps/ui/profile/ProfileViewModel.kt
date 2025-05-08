@@ -67,6 +67,29 @@ class ProfileViewModel : ViewModel() {
     fun signOut() {
         databaseHelper.signOut()
     }
+
+    fun deleteUserAccount() {
+        viewModelScope.launch {
+            try {
+                _uiState.value = ProfileUiState.Loading
+                // Eliminar la cuenta en Firebase
+                val success = databaseHelper.borrarCuentaActual()
+                if (success) {
+                    // Eliminar también la autenticación
+                    databaseHelper.auth.currentUser?.delete()?.await()
+                    // Cerrar sesión
+                    databaseHelper.signOut()
+                    _uiState.value = ProfileUiState.NotAuthenticated
+                } else {
+                    _uiState.value = ProfileUiState.Error("No se pudo eliminar la cuenta")
+                }
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error("Error al eliminar la cuenta: ${e.message}")
+                // Intentar cerrar sesión de todos modos en caso de error
+                databaseHelper.signOut()
+            }
+        }
+    }
 }
 
 sealed class ProfileUiState {

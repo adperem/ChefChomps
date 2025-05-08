@@ -474,15 +474,250 @@ class DatabaseHelper {
     }
 
     /**
+     * Obtiene todas las recetas del usuario actual.
+     *
+     * @return Lista de recetas del usuario o lista vacía si no hay recetas o no está autenticado
+     */
+    suspend fun obtenerRecetasUsuarioActual(): List<Recipe> {
+        val userId = auth.currentUser?.uid ?: return emptyList()
+        return try {
+            buscarRecetasPorIdUsuario(userId) ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al obtener recetas del usuario: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Actualiza una receta existente en la base de datos.
+     *
+     * @param receta La receta con los datos actualizados
+     * @param nuevaImagen Nueva imagen para la receta (opcional)
+     * @return true si la actualización fue exitosa, false en caso contrario
+     */
+    suspend fun actualizarReceta(receta: Recipe, nuevaImagen: Uri? = null): Boolean {
+        if (auth.currentUser == null || receta.id == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        if (receta.userId != userId) {
+            // Solo el creador puede editar la receta
+            return false
+        }
+        
+        return try {
+            // Identificar el documento por el ID hasheado
+            val querySnapshot = db.collection("recetas")
+                .whereEqualTo("id", receta.id)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return false
+            
+            val docId = querySnapshot.documents.first().id
+            val docRef = db.collection("recetas").document(docId)
+            
+            // Subir nueva imagen si existe
+            val imagenUrl = if (nuevaImagen != null) {
+                val storageRef = Firebase.storage.reference
+                val imagenRef = storageRef.child("recetas/${UUID.randomUUID()}")
+                val uploadTask = imagenRef.putFile(nuevaImagen).await()
+                imagenRef.downloadUrl.await().toString()
+            } else {
+                receta.image
+            }
+            
+            // Actualizar datos de la receta
+            val recetaMap = hashMapOf(
+                "id" to receta.id,
+                "title" to receta.title,
+                "image" to imagenUrl,
+                "servings" to receta.servings,
+                "readyInMinutes" to receta.readyInMinutes,
+                "instructions" to receta.instructions,
+                "vegetarian" to receta.vegetarian,
+                "vegan" to receta.vegan,
+                "dishTypes" to receta.dishTypes,
+                "summary" to receta.summary,
+                "userId" to userId,
+                "glutenFree" to receta.glutenFree,
+                "updatedAt" to com.google.firebase.Timestamp.now()
+            )
+            
+            // Actualizar ingredientes
+            val ingredientesMapList = receta.extendedIngredients?.map { ingrediente ->
+                mapOf(
+                    "id" to ingrediente.id,
+                    "name" to ingrediente.name,
+                    "amount" to ingrediente.amount,
+                    "unit" to (ingrediente.unit ?: "")
+                )
+            }
+            
+            if (ingredientesMapList != null) {
+                recetaMap["extendedIngredients"] = ingredientesMapList
+            }
+            
+            // Actualizar la receta
+            docRef.update(recetaMap).await()
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al actualizar receta: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
+     * Elimina una receta de la base de datos.
+     *
+     * @param recetaId ID de la receta a eliminar
+     * @return true si la eliminación fue exitosa, false en caso contrario
+     */
+    suspend fun eliminarReceta(recetaId: Int): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            // Buscar la receta por ID
+            val querySnapshot = db.collection("recetas")
+                .whereEqualTo("id", recetaId)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return false
+            
+            val documento = querySnapshot.documents.first()
+            val recetaUserId = documento.getString("userId")
+            
+            // Verificar que el usuario actual sea el propietario
+            if (recetaUserId != userId) {
+                return false
+            }
+            
+            // Eliminar imagen de storage si existe
+            val imagenUrl = documento.getString("image")
+            if (!imagenUrl.isNullOrEmpty()) {
+                try {
+                    val storageRef = Firebase.storage.getReferenceFromUrl(imagenUrl)
+                    storageRef.delete().await()
+                } catch (e: Exception) {
+                    // Continuar incluso si no se puede eliminar la imagen
+                    Log.w("DatabaseHelper", "No se pudo eliminar la imagen: ${e.message}")
+                }
+            }
+            
+            // Eliminar documento
+            db.collection("recetas").document(documento.id).delete().await()
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar receta: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
      * Borrar de la base de datos el usuario actual
      * @return True si te promete borrar el usuario actual y false en el resto de casos
      */
-    suspend fun borrarCuentaActual() :Boolean{
+    suspend fun borrarCuentaActual(): Boolean {
         if (auth.currentUser == null) {
-                return false;
+            return false
+        }
+        
+        val userId = auth.currentUser!!.uid
+        
+        try {
+            // 1. Primero eliminamos todas las recetas del usuario
+            val recetasSnapshot = db.collection("recetas")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                
+            // 2. Para cada receta, eliminamos su imagen si existe
+            for (documento in recetasSnapshot.documents) {
+                val imagenUrl = documento.getString("image")
+                if (!imagenUrl.isNullOrEmpty()) {
+                    try {
+                        val storageRef = Firebase.storage.getReferenceFromUrl(imagenUrl)
+                        storageRef.delete().await()
+                    } catch (e: Exception) {
+                        // Continuamos incluso si no se puede eliminar una imagen
+                        Log.w("DatabaseHelper", "No se pudo eliminar la imagen: ${e.message}")
+                    }
+                }
+                
+                // 3. Eliminamos el documento de la receta
+                db.collection("recetas").document(documento.id).delete().await()
             }
-        db.collection("usuarios").document(auth.currentUser!!.uid).delete();
-        return true;
+            
+            // 4. Finalmente eliminamos el documento del usuario
+            db.collection("usuarios").document(userId).delete().await()
+            
+            return true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar cuenta: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    /**
+     * Busca usuarios cuyo nombre o nombre de usuario contiene la cadena de búsqueda.
+     * 
+     * @param textoBusqueda Texto para buscar en nombres de usuario
+     * @return Lista de usuarios que coinciden con la búsqueda o una lista vacía si no hay coincidencias
+     */
+    suspend fun buscarUsuariosPorTexto(textoBusqueda: String): List<Usuario> {
+        if (textoBusqueda.length < 2) return emptyList() // Requerir al menos 2 caracteres para buscar
+        
+        return try {
+            val usuarios = mutableListOf<Usuario>()
+            
+            // Primero buscamos por username
+            val queryByUsername = db.collection("usuarios")
+                .orderBy("username")
+                .startAt(textoBusqueda)
+                .endAt(textoBusqueda + "\uf8ff") // El carácter Unicode \uf8ff se usa para búsquedas "starts with"
+                .limit(5) // Limitamos a 5 resultados para evitar sobrecarga
+                .get()
+                .await()
+            
+            // Luego buscamos por nombre
+            val queryByName = db.collection("usuarios")
+                .orderBy("nombre")
+                .startAt(textoBusqueda)
+                .endAt(textoBusqueda + "\uf8ff")
+                .limit(5)
+                .get()
+                .await()
+            
+            // Agregamos los resultados por username
+            for (document in queryByUsername.documents) {
+                document.toObject(Usuario::class.java)?.let { usuario ->
+                    // Añadimos el ID del usuario como propiedad adicional
+                    usuario.id = document.id
+                    usuarios.add(usuario)
+                }
+            }
+            
+            // Agregamos los resultados por nombre, evitando duplicados
+            for (document in queryByName.documents) {
+                document.toObject(Usuario::class.java)?.let { usuario ->
+                    // Verificamos que no esté ya en la lista (para evitar duplicados)
+                    if (usuarios.none { it.id == document.id }) {
+                        usuario.id = document.id
+                        usuarios.add(usuario)
+                    }
+                }
+            }
+            
+            usuarios
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al buscar usuarios por texto: ${e.message}")
+            emptyList()
+        }
     }
 
 }

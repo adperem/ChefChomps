@@ -3,6 +3,7 @@ package com.example.chefchomps.ui
 import ChefChompsTema
 import LabeledMaterialSwitch
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -64,9 +65,14 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.logica.ApiCLient.Companion.autocompleteRecipes
 import com.example.chefchomps.logica.DatabaseHelper
+import com.example.chefchomps.ui.MisRecetasActivity
 import com.example.chefchomps.ui.profile.ProfileScreen
 import com.example.chefchomps.ui.profile.ProfileViewModel
 import kotlinx.coroutines.runBlocking
+
+// Constantes para SharedPreferences
+private const val PREFS_NAME = "ChefChompsPrefs"
+private const val KEY_DARK_THEME = "dark_theme"
 
 /**
  * Class que define la página principal de la app ChefChomps
@@ -76,8 +82,20 @@ class PaginaPrincipal : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Leer la preferencia del tema oscuro
+        val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val savedDarkTheme = sharedPref.getBoolean(KEY_DARK_THEME, false)
+        
         setContent {
-            var darkTheme by remember { mutableStateOf(false) }
+            // Usar el valor guardado como estado inicial
+            var darkTheme by remember { mutableStateOf(savedDarkTheme) }
+            
+            // Guardar el cambio de tema cuando cambie
+            LaunchedEffect(darkTheme) {
+                sharedPref.edit().putBoolean(KEY_DARK_THEME, darkTheme).apply()
+            }
+            
             ChefChompsTema(darkTheme = darkTheme) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     PaginaPrincipal(
@@ -206,6 +224,16 @@ class PaginaPrincipal : ComponentActivity() {
                                 }
                             )
                             DropdownMenuItem(
+                                text = { Text("Mis Recetas") },
+                                onClick = {
+                                    showMenu = false
+                                    context.startActivity(Intent(context, MisRecetasActivity::class.java))
+                                },
+                                leadingIcon = {
+                                    Icon(painterResource(id = R.drawable.ic_recipe), contentDescription = "Mis Recetas")
+                                }
+                            )
+                            DropdownMenuItem(
                                 text = { Text("Nueva Receta") },
                                 onClick = {
                                     showMenu = false
@@ -219,7 +247,7 @@ class PaginaPrincipal : ComponentActivity() {
                                 text = {
                                     LabeledMaterialSwitch(
                                         checked = darkTheme,
-                                        onCheckedChange = {
+                                        onCheckedChange = { 
                                             onThemeChange(it)
                                             showMenu = false
                                         },
@@ -228,6 +256,7 @@ class PaginaPrincipal : ComponentActivity() {
                                     )
                                 },
                                 onClick = {
+                                    // Al hacer clic en el elemento completo, invertimos el estado actual
                                     onThemeChange(!darkTheme)
                                     showMenu = false
                                 }

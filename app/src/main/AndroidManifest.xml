@@ -67,6 +67,11 @@
             android:exported="false"
             android:label="@string/app_name"
             android:theme="@style/Theme.ChefChomps" />
+        <activity
+            android:name=".ui.MisRecetasActivity"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.ChefChomps" />
     </application>
 
 </manifest>

@@ -15,4 +15,7 @@ data class Usuario(
     val apellidos: String = "",
     val password: String = "",
     val username: String = ""
-)
+) {
+    // ID que se asigna después de recuperar el documento de Firestore
+    var id: String = ""
+}

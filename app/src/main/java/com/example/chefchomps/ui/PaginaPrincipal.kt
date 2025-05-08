@@ -1,6 +1,7 @@
 package com.example.chefchomps.ui
 
 import ChefChompsTema
+import LabeledMaterialSwitch
 import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
@@ -39,9 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
-import com.example.chefchomps.R
 import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.persistencia.MockerRecetas
 import com.example.chefchomps.ui.profile.ProfileScreen
@@ -136,17 +135,20 @@ class PaginaPrincipal : ComponentActivity() {
                                 }
                             )
                             DropdownMenuItem(
-                                text = { Text(if (darkTheme) "Modo Claro" else "Modo Oscuro") },
+                                text = {
+                                    LabeledMaterialSwitch(
+                                        checked = darkTheme,
+                                        onCheckedChange = {
+                                            onThemeChange(it)
+                                            showMenu = false
+                                        },
+                                        label = if (darkTheme) "Modo Claro" else "Modo Oscuro",
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+                                },
                                 onClick = {
                                     onThemeChange(!darkTheme)
-                                    showMenu = false },
-                                leadingIcon = {
-                                    Icon(
-                                        painter = painterResource(
-                                            if (darkTheme) R.drawable.ic_sun else R.drawable.ic_moon
-                                        ),
-                                        contentDescription = "Cambiar tema"
-                                    )
+                                    showMenu = false
                                 }
                             )
                             DropdownMenuItem(
@@ -193,4 +195,6 @@ class PaginaPrincipal : ComponentActivity() {
             }
         }
     }
+
+
 }

@@ -114,10 +114,108 @@ fun HtmlText(
     style: androidx.compose.ui.text.TextStyle = MaterialTheme.typography.bodyMedium,
     modifier: Modifier = Modifier
 ) {
-    // Simplemente mostrar el texto sin procesar el HTML
     Text(
-        text = html,
+        text = formatHtmlTags(html),
         style = style,
         modifier = modifier
     )
+}
+
+/**
+ * Función para formatear etiquetas HTML específicas
+ */
+private fun formatHtmlTags(html: String): String {
+    var result = html
+    
+    // Procesar listas ordenadas y desordenadas
+    result = processLists(result)
+    
+    // Procesar párrafos
+    result = result.replace(Regex("<p>(.*?)</p>", RegexOption.DOT_MATCHES_ALL), "$1\n\n")
+    
+    // Procesar saltos de línea
+    result = result.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+    
+    // Procesar encabezados - sin caracteres de formato
+    result = result.replace(Regex("<h1>(.*?)</h1>"), "$1\n")
+        .replace(Regex("<h2>(.*?)</h2>"), "$1\n")
+        .replace(Regex("<h3>(.*?)</h3>"), "$1\n")
+        .replace(Regex("<h4>(.*?)</h4>"), "$1\n")
+    
+    // Procesar negritas e itálicas - sin caracteres de formato
+    result = result.replace(Regex("<b>(.*?)</b>"), "$1")
+        .replace(Regex("<strong>(.*?)</strong>"), "$1")
+        .replace(Regex("<i>(.*?)</i>"), "$1")
+        .replace(Regex("<em>(.*?)</em>"), "$1")
+    
+    // Eliminar etiquetas HTML restantes
+    result = result.replace(Regex("<[^>]*>"), "")
+    
+    // Reemplazar entidades HTML comunes
+    result = result.replace("&nbsp;", " ")
+        .replace("&amp;", "&")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&apos;", "'")
+        .replace("&#39;", "'")
+        .replace("&ndash;", "-")
+        .replace("&mdash;", "—")
+        .replace("&lsquo;", "'")
+        .replace("&rsquo;", "'")
+        .replace("&ldquo;", """)
+        .replace("&rdquo;", """)
+        .replace("&bull;", "•")
+        .replace("&hellip;", "...")
+        .replace(Regex("&#\\d+;")) { matchResult ->
+            try {
+                val number = matchResult.value.substring(2, matchResult.value.length - 1).toInt()
+                number.toChar().toString()
+            } catch (e: Exception) {
+                matchResult.value
+            }
+        }
+    
+    return result.trim()
+}
+
+/**
+ * Procesa listas HTML (ordenadas y desordenadas)
+ */
+private fun processLists(html: String): String {
+    var result = html
+    
+    // Procesar listas desordenadas
+    val ulPattern = Regex("<ul>(.*?)</ul>", RegexOption.DOT_MATCHES_ALL)
+    result = result.replace(ulPattern) { matchResult ->
+        val listContent = matchResult.groupValues[1]
+        processListItems(listContent, false)
+    }
+    
+    // Procesar listas ordenadas
+    val olPattern = Regex("<ol>(.*?)</ol>", RegexOption.DOT_MATCHES_ALL)
+    result = result.replace(olPattern) { matchResult ->
+        val listContent = matchResult.groupValues[1]
+        processListItems(listContent, true)
+    }
+    
+    return result
+}
+
+/**
+ * Procesa los elementos de una lista
+ */
+private fun processListItems(listContent: String, isOrdered: Boolean): String {
+    val liPattern = Regex("<li>(.*?)</li>", RegexOption.DOT_MATCHES_ALL)
+    val items = mutableListOf<String>()
+    var index = 1
+    
+    val matches = liPattern.findAll(listContent)
+    matches.forEach { match ->
+        val itemContent = match.groupValues[1]
+        val prefix = if (isOrdered) "${index++}. " else "• "
+        items.add("$prefix$itemContent")
+    }
+    
+    return items.joinToString("\n") + "\n\n"
 } 

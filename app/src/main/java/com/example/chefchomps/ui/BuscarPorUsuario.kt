@@ -45,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.model.Recipe
 import kotlinx.coroutines.runBlocking
+import com.google.gson.Gson
 
 class BuscarPorUsuario : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -190,11 +191,15 @@ fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
                     else
                         "",
                     onRecetaClick = { receta ->
-                        // Navegación a la pantalla de detalle
+                        // Convertir la receta a JSON para enviar todos los detalles
+                        val gson = Gson()
+                        val recetaJson = gson.toJson(receta)
+                        
+                        // Navegación a la pantalla de detalle con la receta completa
                         val intent = Intent(context, PaginaDetalle::class.java)
-                        intent.putExtra("receta_id", receta.id ?: -1)
-                        intent.putExtra("receta_title", receta.title)
-                        intent.putExtra("receta_image", receta.image ?: "")
+                        intent.putExtra("receta_json", recetaJson)
+                        // Indicamos que la receta viene de Firebase, no de la API
+                        intent.putExtra("from_firebase", true)
                         context.startActivity(intent)
                     }
                 )

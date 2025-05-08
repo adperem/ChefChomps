@@ -38,6 +38,7 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.ui.components.DetalleRecetaContent
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -48,10 +49,23 @@ class PaginaDetalle : ComponentActivity() {
         val recetaId = intent.getIntExtra("receta_id", -1)
         val recetaTitle = intent.getStringExtra("receta_title") ?: ""
         val recetaImage = intent.getStringExtra("receta_image") ?: ""
+        val recetaJson = intent.getStringExtra("receta_json")
+        val fromFirebase = intent.getBooleanExtra("from_firebase", false)
         
-        // Si el ID es inválido, mostrar un mensaje y terminar
-        if (recetaId <= 0) {
-            Toast.makeText(this, "No se pudo cargar la receta: ID inválido", Toast.LENGTH_LONG).show()
+        // Si tenemos JSON de Firebase, lo usamos directamente
+        val recetaFromJson = if (recetaJson != null) {
+            try {
+                val gson = com.google.gson.Gson()
+                gson.fromJson(recetaJson, Recipe::class.java)
+            } catch (e: Exception) {
+                Toast.makeText(this, "Error al procesar los datos de la receta", Toast.LENGTH_LONG).show()
+                null
+            }
+        } else null
+        
+        // Si el ID es inválido y no tenemos datos de Firebase, mostrar un mensaje y terminar
+        if (recetaId <= 0 && recetaFromJson == null) {
+            Toast.makeText(this, "No se pudo cargar la receta: datos insuficientes", Toast.LENGTH_LONG).show()
             if (recetaTitle.isEmpty()) {
                 finish()
                 return
@@ -61,7 +75,11 @@ class PaginaDetalle : ComponentActivity() {
         setContent {
             ChefChompsTema(darkTheme = false) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    if (recetaId > 0 || recetaTitle.isNotEmpty()) {
+                    if (recetaFromJson != null) {
+                        // Si la receta viene de Firebase como JSON, la mostramos directamente
+                        PaginaDetalleFirebase(receta = recetaFromJson)
+                    } else if (recetaId > 0 || recetaTitle.isNotEmpty()) {
+                        // Si no, seguimos el flujo original para buscar en la API
                         PaginaDetalle(recetaId = recetaId, titulo = recetaTitle, imagen = recetaImage)
                     } else {
                         Text(
@@ -76,6 +94,22 @@ class PaginaDetalle : ComponentActivity() {
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PaginaDetalleFirebase(
+    receta: Recipe,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        // Mostrar directamente los detalles de la receta de Firebase
+        DetalleRecetaContent(recipe = receta)
     }
 }
 

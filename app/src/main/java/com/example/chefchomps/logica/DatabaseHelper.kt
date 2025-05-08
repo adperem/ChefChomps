@@ -261,8 +261,45 @@ class DatabaseHelper {
                 null
             }
 
+            // Crear un documento con ID generado automáticamente
+            val docRef = db.collection("recetas").document()
+            val docId = docRef.id
+            val recetaId = docId.hashCode()
+            
+            // Crear un mapa con los datos de la receta para evitar problemas de serialización
+            val recetaMap = hashMapOf(
+                "id" to recetaId,
+                "title" to titulo,
+                "image" to imagenUrl,
+                "servings" to porciones,
+                "readyInMinutes" to tiempoPreparacion,
+                "instructions" to pasos.joinToString("\n"),
+                "vegetarian" to esVegetariana,
+                "vegan" to esVegana,
+                "dishTypes" to listOf(tipoPlato),
+                "summary" to descripcion,
+                "userId" to userId,
+                "glutenFree" to glutenFree,
+                "createdAt" to com.google.firebase.Timestamp.now()
+            )
+            
+            // Guardar los ingredientes como una lista de mapas
+            val ingredientesMapList = ingredientes.map { ingrediente ->
+                mapOf(
+                    "id" to ingrediente.id,
+                    "name" to ingrediente.name,
+                    "amount" to ingrediente.amount,
+                    "unit" to (ingrediente.unit ?: "")
+                )
+            }
+            recetaMap["extendedIngredients"] = ingredientesMapList
+            
+            // Guardar la receta
+            docRef.set(recetaMap).await()
+            
+            // Crear el objeto Recipe para devolver al cliente
             val receta = Recipe(
-                id = null, // Firebase generará el ID automáticamente
+                id = recetaId,
                 title = titulo,
                 image = imagenUrl,
                 servings = porciones,
@@ -277,17 +314,9 @@ class DatabaseHelper {
                 glutenFree = glutenFree
             )
 
-            // Crear un documento con ID generado automáticamente
-            val docRef = db.collection("recetas").document()
-            
-            // Asignar el ID del documento a la receta
-            val recetaConId = receta.copy(id = docRef.id.hashCode())
-            
-            // Guardar la receta
-            docRef.set(recetaConId).await()
-
-            recetaConId
+            receta
         } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al subir receta: ${e.message}")
             e.printStackTrace()
             null
         }
@@ -359,43 +388,81 @@ class DatabaseHelper {
             val recetas = mutableListOf<Recipe>()
             
             for (document in querySnapshot.documents) {
-                // Deserialización manual en lugar de usar toObject
-                val id = document.getLong("id")?.toInt()
-                val title = document.getString("title") ?: ""
-                val image = document.getString("image")
-                val servings = document.getLong("servings")?.toInt()
-                val readyInMinutes = document.getLong("readyInMinutes")?.toInt()
-                val instructions = document.getString("instructions")
-                val summary = document.getString("summary")
-                val vegetarian = document.getBoolean("vegetarian") ?: false
-                val vegan = document.getBoolean("vegan") ?: false
-                val glutenFree = document.getBoolean("glutenFree") ?: false
-                
-                // Obtener dishTypes como lista de strings
-                val dishTypesData = document.get("dishTypes") as? List<*>
-                val dishTypes = dishTypesData?.mapNotNull { it as? String } ?: emptyList()
-                
-                // Para ingredientes, creamos una lista vacía ya que es más complejo deserializarlos
-                // Si necesitas los ingredientes, se puede implementar una deserialización más compleja
-                val ingredients = emptyList<Ingredient>()
-                
-                val receta = Recipe(
-                    id = id,
-                    title = title,
-                    image = image,
-                    servings = servings,
-                    readyInMinutes = readyInMinutes,
-                    instructions = instructions,
-                    extendedIngredients = ingredients,
-                    vegetarian = vegetarian,
-                    vegan = vegan,
-                    dishTypes = dishTypes,
-                    summary = summary,
-                    userId = userId,
-                    glutenFree = glutenFree
-                )
-                
-                recetas.add(receta)
+                try {
+                    // Deserialización manual de los campos principales
+                    val id = document.getLong("id")?.toInt()
+                    val title = document.getString("title") ?: ""
+                    val image = document.getString("image")
+                    val servings = document.getLong("servings")?.toInt()
+                    val readyInMinutes = document.getLong("readyInMinutes")?.toInt()
+                    val instructions = document.getString("instructions")
+                    val summary = document.getString("summary")
+                    val vegetarian = document.getBoolean("vegetarian") ?: false
+                    val vegan = document.getBoolean("vegan") ?: false
+                    val glutenFree = document.getBoolean("glutenFree") ?: false
+                    
+                    // Obtener dishTypes como lista de strings
+                    val dishTypesData = document.get("dishTypes") as? List<*>
+                    val dishTypes = dishTypesData?.mapNotNull { it as? String } ?: emptyList()
+                    
+                    // Deserializar ingredientes
+                    val ingredientesData = document.get("extendedIngredients") as? List<*>
+                    val ingredientes = mutableListOf<Ingredient>()
+                    
+                    ingredientesData?.forEach { item ->
+                        if (item is Map<*, *>) {
+                            val ingredienteId = (item["id"] as? Number)?.toInt() ?: 0
+                            val name = (item["name"] as? String) ?: ""
+                            val amount = (item["amount"] as? Number)?.toDouble() ?: 0.0
+                            val unit = (item["unit"] as? String) ?: ""
+                            
+                            // Crear un objeto Ingredient simplificado con los datos disponibles
+                            val ingrediente = Ingredient(
+                                id = ingredienteId,
+                                name = name,
+                                aisle = "",
+                                image = "",
+                                amount = amount,
+                                unit = unit,
+                                unitShort = "",
+                                unitLong = "",
+                                original = "",
+                                originalName = "",
+                                consistency = "",
+                                possibleUnits = null,
+                                estimatedCost = null,
+                                shoppingListUnits = null,
+                                meta = null,
+                                nutrition = null,
+                                categoryPath = null
+                            )
+                            
+                            ingredientes.add(ingrediente)
+                        }
+                    }
+                    
+                    // Crear el objeto Recipe
+                    val receta = Recipe(
+                        id = id,
+                        title = title,
+                        image = image,
+                        servings = servings,
+                        readyInMinutes = readyInMinutes,
+                        instructions = instructions,
+                        extendedIngredients = ingredientes,
+                        vegetarian = vegetarian,
+                        vegan = vegan,
+                        dishTypes = dishTypes,
+                        summary = summary,
+                        userId = userId,
+                        glutenFree = glutenFree
+                    )
+                    
+                    recetas.add(receta)
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Error al deserializar receta: ${e.message}")
+                    // Continuar con la siguiente receta si hay un error en esta
+                }
             }
             
             recetas

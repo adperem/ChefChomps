@@ -3,6 +3,7 @@ package com.example.chefchomps.ui
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -379,41 +380,54 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                             return@Button
                         }
 
+                        // Verificar si hay usuario autenticado
+                        if (databaseHelper.auth.currentUser == null) {
+                            coroutineScope.launch {
+                                snackbarHostState.showSnackbar("Debes iniciar sesión para subir una receta")
+                            }
+                            return@Button
+                        }
+
                         isLoading = true
                         coroutineScope.launch {
-                            val recetaCreada = databaseHelper.subirReceta(
-                                titulo = titulo,
-                                imagenUri = imagenUri,
-                                ingredientes = ingredientes.filter { it.name.isNotBlank() },
-                                pasos = pasos.filter { it.isNotBlank() },
-                                tiempoPreparacion = tiempoPreparacion.toInt(),
-                                descripcion = descripcion,
-                                porciones = porciones.toInt(),
-                                esVegetariana = esVegetariana,
-                                esVegana = esVegana,
-                                tipoPlato = tipoPlato,
-                                glutenFree = glutenFree
-                            )
+                            try {
+                                val recetaCreada = databaseHelper.subirReceta(
+                                    titulo = titulo,
+                                    imagenUri = imagenUri,
+                                    ingredientes = ingredientes.filter { it.name.isNotBlank() },
+                                    pasos = pasos.filter { it.isNotBlank() },
+                                    tiempoPreparacion = tiempoPreparacion.toIntOrNull() ?: 0,
+                                    descripcion = descripcion,
+                                    porciones = porciones.toIntOrNull() ?: 1,
+                                    esVegetariana = esVegetariana,
+                                    esVegana = esVegana,
+                                    tipoPlato = tipoPlato,
+                                    glutenFree = glutenFree
+                                )
 
-                            isLoading = false
-                            
-                            if (recetaCreada != null) {
-                                // Convertir la receta a JSON para enviarla a la siguiente actividad
-                                val gson = com.google.gson.Gson()
-                                val recetaJson = gson.toJson(recetaCreada)
-                                
-                                // Navegar a la pantalla para ver la receta
-                                val intent = Intent(context, VerReceta::class.java)
-                                intent.putExtra("receta_json", recetaJson)
-                                context.startActivity(intent)
-                                
-                                // Mostrar mensaje de éxito
-                                snackbarHostState.showSnackbar("¡Receta creada con éxito!")
-                                
-                                // Cerrar la actividad actual
-                                (context as? ComponentActivity)?.finish()
-                            } else {
-                                snackbarHostState.showSnackbar("Error al subir la receta")
+                                if (recetaCreada != null) {
+                                    // Convertir la receta a JSON para enviarla a la siguiente actividad
+                                    val gson = com.google.gson.Gson()
+                                    val recetaJson = gson.toJson(recetaCreada)
+                                    
+                                    // Navegar a la pantalla para ver la receta
+                                    val intent = Intent(context, VerReceta::class.java)
+                                    intent.putExtra("receta_json", recetaJson)
+                                    context.startActivity(intent)
+                                    
+                                    // Mostrar mensaje de éxito
+                                    snackbarHostState.showSnackbar("¡Receta creada con éxito!")
+                                    
+                                    // Cerrar la actividad actual
+                                    (context as? ComponentActivity)?.finish()
+                                } else {
+                                    snackbarHostState.showSnackbar("Error al subir la receta")
+                                }
+                            } catch (e: Exception) {
+                                Log.e("NuevaReceta", "Error al subir receta: ${e.message}")
+                                snackbarHostState.showSnackbar("Error: ${e.message ?: "Desconocido"}")
+                            } finally {
+                                isLoading = false
                             }
                         }
                     },

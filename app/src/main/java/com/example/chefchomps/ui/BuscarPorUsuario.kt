@@ -1,0 +1,175 @@
+package com.example.chefchomps.ui
+
+import ChefChompsTema
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.unit.dp
+import com.example.chefchomps.logica.DatabaseHelper
+import com.example.chefchomps.model.Recipe
+import kotlinx.coroutines.runBlocking
+
+class BuscarPorUsuario : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContent {
+            ChefChompsTema(darkTheme = false) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    BuscarPorUsuarioScreen(onBack = { finish() })
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BuscarPorUsuarioScreen(onBack: () -> Unit) {
+    val context = LocalContext.current
+    val databaseHelper = remember { DatabaseHelper() }
+    var searchText by remember { mutableStateOf("") }
+    var isSearching by remember { mutableStateOf(false) }
+    var userRecipes by remember { mutableStateOf<List<Recipe>>(emptyList()) }
+    val focusManager = LocalFocusManager.current
+    val textFieldFocusRequester = remember { FocusRequester() }
+    
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Buscar por Usuario") },
+                navigationIcon = {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(paddingValues)
+                .padding(16.dp)
+        ) {
+            // Campo de búsqueda
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .focusRequester(textFieldFocusRequester),
+                placeholder = { Text("Ingrese nombre de usuario...") },
+                leadingIcon = { 
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "Buscar"
+                    )
+                },
+                trailingIcon = {
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchText = ""
+                            focusManager.clearFocus()
+                        }) {
+                            Icon(
+                                Icons.Default.Clear,
+                                contentDescription = "Limpiar"
+                            )
+                        }
+                    }
+                },
+                singleLine = true,
+                shape = RoundedCornerShape(24.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        if (searchText.isNotEmpty()) {
+                            isSearching = true
+                            focusManager.clearFocus()
+                            
+                            // Aquí iría la lógica para buscar recetas por usuario
+                            // Simulamos una búsqueda (esto tendría que implementarse en DatabaseHelper)
+                            runBlocking {
+                                try {
+                                    // Simulamos que obtenemos recetas del usuario buscado
+                                    // Esta función tendría que ser implementada realmente
+                                    userRecipes = databaseHelper.buscarRecetasPorUsuario(searchText) ?: emptyList()
+                                } finally {
+                                    isSearching = false
+                                }
+                            }
+                        }
+                    }
+                )
+            )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Indicador de carga
+            if (isSearching) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                // Mostrar resultados
+                RecetasList(
+                    recipes = userRecipes,
+                    emptyMessage = if (searchText.isEmpty()) 
+                        "Ingrese un nombre de usuario para buscar sus recetas" 
+                    else 
+                        "No se encontraron recetas para el usuario '$searchText'",
+                    onRecetaClick = { receta ->
+                        // Navegación a la pantalla de detalle
+                        val intent = Intent(context, PaginaDetalle::class.java)
+                        intent.putExtra("receta_id", receta.id ?: -1)
+                        intent.putExtra("receta_title", receta.title)
+                        intent.putExtra("receta_image", receta.image ?: "")
+                        context.startActivity(intent)
+                    }
+                )
+            }
+        }
+    }
+} 

@@ -1,5 +1,6 @@
 package com.example.chefchomps.ui
 
+import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -380,7 +381,7 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
 
                         isLoading = true
                         coroutineScope.launch {
-                            val success = databaseHelper.subirReceta(
+                            val recetaCreada = databaseHelper.subirReceta(
                                 titulo = titulo,
                                 imagenUri = imagenUri,
                                 ingredientes = ingredientes.filter { it.name.isNotBlank() },
@@ -394,13 +395,26 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                                 glutenFree = glutenFree
                             )
 
-                            if (success) {
-                                snackbarHostState.showSnackbar("¡Receta subida con éxito!")
-                                onBack()
+                            isLoading = false
+                            
+                            if (recetaCreada != null) {
+                                // Convertir la receta a JSON para enviarla a la siguiente actividad
+                                val gson = com.google.gson.Gson()
+                                val recetaJson = gson.toJson(recetaCreada)
+                                
+                                // Navegar a la pantalla para ver la receta
+                                val intent = Intent(context, VerReceta::class.java)
+                                intent.putExtra("receta_json", recetaJson)
+                                context.startActivity(intent)
+                                
+                                // Mostrar mensaje de éxito
+                                snackbarHostState.showSnackbar("¡Receta creada con éxito!")
+                                
+                                // Cerrar la actividad actual
+                                (context as? ComponentActivity)?.finish()
                             } else {
                                 snackbarHostState.showSnackbar("Error al subir la receta")
                             }
-                            isLoading = false
                         }
                     },
                     modifier = Modifier

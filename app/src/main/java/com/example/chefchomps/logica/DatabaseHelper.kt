@@ -46,14 +46,22 @@ class DatabaseHelper {
      * @param password Contraseña del usuario.
      * @param nombre Nombre del usuario.
      * @param apellidos Apellidos del usuario.
+     * @param username Nombre de usuario (opcional, se genera automáticamente si no se proporciona).
      * @return 'true' si el registro fue exitoso, 'false' en caso de error.
      */
-    suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String): RegistroResultado {
+    suspend fun registerUser(email: String, password: String, nombre: String, apellidos: String, username: String = ""): RegistroResultado {
         return try {
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val userId = authResult.user?.uid ?: return RegistroResultado.ERROR
 
-            val usuario = Usuario(email, nombre, apellidos)
+            // Generar nombre de usuario a partir del email si no se proporciona
+            val finalUsername = if (username.isBlank()) {
+                email.substringBefore("@").replace(".", "_")
+            } else {
+                username
+            }
+
+            val usuario = Usuario(email, nombre, apellidos, password, finalUsername)
             db.collection("usuarios").document(userId).set(usuario).await()
 
             RegistroResultado.EXITO
@@ -211,6 +219,22 @@ class DatabaseHelper {
         auth.signOut()
     }
 
+    /**
+     * Sube una nueva receta a la base de datos.
+     *
+     * @param titulo Título de la receta
+     * @param imagenUri URI de la imagen de la receta (opcional)
+     * @param ingredientes Lista de ingredientes de la receta
+     * @param pasos Pasos para preparar la receta
+     * @param tiempoPreparacion Tiempo de preparación en minutos
+     * @param descripcion Descripción de la receta
+     * @param porciones Número de porciones
+     * @param esVegetariana Indica si la receta es vegetariana
+     * @param esVegana Indica si la receta es vegana
+     * @param tipoPlato Tipo de plato
+     * @param glutenFree Indica si la receta es libre de gluten
+     * @return La receta creada si tiene éxito, null en caso de error
+     */
     suspend fun subirReceta(
         titulo: String,
         imagenUri: Uri?,
@@ -223,9 +247,9 @@ class DatabaseHelper {
         esVegana: Boolean,
         tipoPlato: String,
         glutenFree: Boolean
-    ): Boolean {
+    ): Recipe? {
         return try {
-            val userId = null// = auth.currentUser?.uid ?: return false
+            val userId = auth.currentUser?.uid
 
             val imagenUrl = if (imagenUri != null) {
                 val storageRef = Firebase.storage.reference
@@ -237,6 +261,7 @@ class DatabaseHelper {
             }
 
             val receta = Recipe(
+                id = null, // Firebase generará el ID automáticamente
                 title = titulo,
                 image = imagenUrl,
                 servings = porciones,
@@ -251,15 +276,35 @@ class DatabaseHelper {
                 glutenFree = glutenFree
             )
 
-            db.collection("recetas")
-                .document()
-                .set(receta)
-                .await()
+            // Crear un documento con ID generado automáticamente
+            val docRef = db.collection("recetas").document()
+            
+            // Asignar el ID del documento a la receta
+            val recetaConId = receta.copy(id = docRef.id.hashCode())
+            
+            // Guardar la receta
+            docRef.set(recetaConId).await()
 
-            true
+            recetaConId
         } catch (e: Exception) {
             e.printStackTrace()
-            false
+            null
+        }
+    }
+
+    /**
+     * Busca recetas creadas por un usuario específico
+     * 
+     * @param nombreUsuario Nombre del usuario cuyas recetas se quieren buscar
+     * @return Lista de recetas del usuario o null si ocurre un error
+     */
+    suspend fun buscarRecetasPorUsuario(nombreUsuario: String): List<Recipe>? {
+        return try {
+            // Aquí implementaríamos la lógica real para buscar en Firebase
+            // Por ahora, retornamos una lista vacía como ejemplo
+            emptyList()
+        } catch (e: Exception) {
+            null
         }
     }
 

@@ -5,11 +5,13 @@ import android.util.Log
 import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
+import com.example.chefchomps.model.Comentario
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -280,7 +282,9 @@ class DatabaseHelper {
                 "summary" to descripcion,
                 "userId" to userId,
                 "glutenFree" to glutenFree,
-                "createdAt" to com.google.firebase.Timestamp.now()
+                "createdAt" to com.google.firebase.Timestamp.now(),
+                "valoracionPromedio" to 0.0,
+                "cantidadValoraciones" to 0
             )
             
             // Guardar los ingredientes como una lista de mapas
@@ -516,6 +520,11 @@ class DatabaseHelper {
             val docId = querySnapshot.documents.first().id
             val docRef = db.collection("recetas").document(docId)
             
+            // Obtener los datos actuales de valoración
+            val docSnapshot = db.collection("recetas").document(docId).get().await()
+            val valoracionPromedio = docSnapshot.getDouble("valoracionPromedio") ?: 0.0
+            val cantidadValoraciones = docSnapshot.getLong("cantidadValoraciones")?.toInt() ?: 0
+            
             // Subir nueva imagen si existe
             val imagenUrl = if (nuevaImagen != null) {
                 val storageRef = Firebase.storage.reference
@@ -540,7 +549,9 @@ class DatabaseHelper {
                 "summary" to receta.summary,
                 "userId" to userId,
                 "glutenFree" to receta.glutenFree,
-                "updatedAt" to com.google.firebase.Timestamp.now()
+                "updatedAt" to com.google.firebase.Timestamp.now(),
+                "valoracionPromedio" to valoracionPromedio,
+                "cantidadValoraciones" to cantidadValoraciones
             )
             
             // Actualizar ingredientes
@@ -717,6 +728,202 @@ class DatabaseHelper {
         } catch (e: Exception) {
             Log.e("DatabaseHelper", "Error al buscar usuarios por texto: ${e.message}")
             emptyList()
+        }
+    }
+
+    /**
+     * Añade un comentario y valoración a una receta
+     * 
+     * @param recetaId ID de la receta
+     * @param texto Texto del comentario
+     * @param valoracion Valoración de 1 a 5
+     * @return true si se añadió correctamente, false en caso contrario
+     */
+    suspend fun agregarComentario(recetaId: Int, texto: String, valoracion: Int): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            // Primero obtenemos los datos del usuario para incluir su nombre en el comentario
+            val usuario = getUserProfile() ?: return false
+            
+            val comentario = Comentario(
+                id = UUID.randomUUID().toString(),
+                usuarioId = userId,
+                nombreUsuario = usuario.username,
+                recetaId = recetaId,
+                texto = texto,
+                valoracion = valoracion,
+                fecha = com.google.firebase.Timestamp.now()
+            )
+            
+            // Guardar el comentario en la colección "comentarios"
+            db.collection("comentarios").document(comentario.id).set(comentario).await()
+            
+            // Actualizar el promedio de valoraciones de la receta
+            actualizarValoracionPromedio(recetaId)
+            
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al añadir comentario: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+    
+    /**
+     * Obtiene todos los comentarios para una receta específica
+     * 
+     * @param recetaId ID de la receta
+     * @return Lista de comentarios o lista vacía si no hay comentarios
+     */
+    suspend fun obtenerComentarios(recetaId: Int): List<Comentario> {
+        return try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .orderBy("fecha", Query.Direction.DESCENDING)
+                .get()
+                .await()
+                
+            val comentarios = mutableListOf<Comentario>()
+            
+            for (document in querySnapshot.documents) {
+                document.toObject(Comentario::class.java)?.let { comentario ->
+                    comentarios.add(comentario)
+                }
+            }
+            
+            comentarios
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al obtener comentarios: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+    
+    /**
+     * Elimina un comentario (solo puede hacerlo el autor o el dueño de la receta)
+     * 
+     * @param comentarioId ID del comentario
+     * @return true si se eliminó correctamente, false en caso contrario
+     */
+    suspend fun eliminarComentario(comentarioId: String): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            val comentarioDoc = db.collection("comentarios").document(comentarioId).get().await()
+            val comentario = comentarioDoc.toObject(Comentario::class.java) ?: return false
+            
+            // Verificar que el usuario actual es el autor del comentario
+            if (comentario.usuarioId != userId) {
+                // Verificar si el usuario es el dueño de la receta
+                val recetaQuery = db.collection("recetas")
+                    .whereEqualTo("id", comentario.recetaId)
+                    .get()
+                    .await()
+                
+                if (recetaQuery.isEmpty) return false
+                
+                val receta = recetaQuery.documents.firstOrNull() ?: return false
+                val recetaUserId = receta.getString("userId")
+                
+                if (recetaUserId != userId) {
+                    // No es ni el autor del comentario ni el dueño de la receta
+                    return false
+                }
+            }
+            
+            // Eliminar comentario
+            db.collection("comentarios").document(comentarioId).delete().await()
+            
+            // Actualizar valoración promedio
+            actualizarValoracionPromedio(comentario.recetaId)
+            
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar comentario: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+    
+    /**
+     * Actualiza la valoración promedio de una receta
+     */
+    private suspend fun actualizarValoracionPromedio(recetaId: Int) {
+        try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .get()
+                .await()
+                
+            var sumaValoraciones = 0
+            var cantidadValoraciones = 0
+            
+            for (document in querySnapshot.documents) {
+                val valoracion = document.getLong("valoracion")?.toInt() ?: 0
+                if (valoracion > 0) {
+                    sumaValoraciones += valoracion
+                    cantidadValoraciones++
+                }
+            }
+            
+            val valoracionPromedio = if (cantidadValoraciones > 0) {
+                sumaValoraciones.toDouble() / cantidadValoraciones
+            } else {
+                0.0
+            }
+            
+            // Buscar la receta por ID
+            val recetasQuery = db.collection("recetas")
+                .whereEqualTo("id", recetaId)
+                .get()
+                .await()
+                
+            if (!recetasQuery.isEmpty) {
+                val docId = recetasQuery.documents.first().id
+                // Actualizar la valoración promedio
+                db.collection("recetas").document(docId).update(
+                    mapOf(
+                        "valoracionPromedio" to valoracionPromedio,
+                        "cantidadValoraciones" to cantidadValoraciones
+                    )
+                ).await()
+            }
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al actualizar valoración promedio: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+    
+    /**
+     * Verifica si el usuario ya ha comentado una receta
+     * 
+     * @param recetaId ID de la receta
+     * @return El comentario existente si el usuario ya ha comentado, null en caso contrario
+     */
+    suspend fun obtenerComentarioUsuario(recetaId: Int): Comentario? {
+        if (auth.currentUser == null) return null
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .whereEqualTo("usuarioId", userId)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return null
+            
+            querySnapshot.documents.firstOrNull()?.toObject(Comentario::class.java)
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al verificar comentario existente: ${e.message}")
+            e.printStackTrace()
+            null
         }
     }
 

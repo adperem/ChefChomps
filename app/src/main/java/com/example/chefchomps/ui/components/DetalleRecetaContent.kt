@@ -367,8 +367,6 @@ fun ComentarioForm(onSubmit: (String, Int) -> Unit) {
             Button(
                 onClick = {
                     onSubmit(texto, valoracion)
-                    texto = ""
-                    valoracion = 5
                 },
                 modifier = Modifier.align(Alignment.End),
                 enabled = valoracion > 0

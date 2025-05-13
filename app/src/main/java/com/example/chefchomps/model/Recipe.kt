@@ -45,7 +45,9 @@ data class Recipe(
     val sourceName: String? = null,
     val sourceUrl: String? = null,
     val spoonacularSourceUrl: String? = null,
-    val imageType: String? = null
+    val imageType: String? = null,
+    val valoracionPromedio: Double? = 0.0,
+    val cantidadValoraciones: Int? = 0
 )
 
 /**

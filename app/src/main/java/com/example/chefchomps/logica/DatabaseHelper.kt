@@ -5,11 +5,13 @@ import android.util.Log
 import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
+import com.example.chefchomps.model.Comentario
 import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.google.firebase.storage.storage
 import kotlinx.coroutines.tasks.await
 import java.util.UUID
@@ -261,8 +263,47 @@ class DatabaseHelper {
                 null
             }
 
+            // Crear un documento con ID generado automáticamente
+            val docRef = db.collection("recetas").document()
+            val docId = docRef.id
+            val recetaId = docId.hashCode()
+            
+            // Crear un mapa con los datos de la receta para evitar problemas de serialización
+            val recetaMap = hashMapOf(
+                "id" to recetaId,
+                "title" to titulo,
+                "image" to imagenUrl,
+                "servings" to porciones,
+                "readyInMinutes" to tiempoPreparacion,
+                "instructions" to pasos.joinToString("\n"),
+                "vegetarian" to esVegetariana,
+                "vegan" to esVegana,
+                "dishTypes" to listOf(tipoPlato),
+                "summary" to descripcion,
+                "userId" to userId,
+                "glutenFree" to glutenFree,
+                "createdAt" to com.google.firebase.Timestamp.now(),
+                "valoracionPromedio" to 0.0,
+                "cantidadValoraciones" to 0
+            )
+            
+            // Guardar los ingredientes como una lista de mapas
+            val ingredientesMapList = ingredientes.map { ingrediente ->
+                mapOf(
+                    "id" to ingrediente.id,
+                    "name" to ingrediente.name,
+                    "amount" to ingrediente.amount,
+                    "unit" to (ingrediente.unit ?: "")
+                )
+            }
+            recetaMap["extendedIngredients"] = ingredientesMapList
+            
+            // Guardar la receta
+            docRef.set(recetaMap).await()
+            
+            // Crear el objeto Recipe para devolver al cliente
             val receta = Recipe(
-                id = null, // Firebase generará el ID automáticamente
+                id = recetaId,
                 title = titulo,
                 image = imagenUrl,
                 servings = porciones,
@@ -277,17 +318,9 @@ class DatabaseHelper {
                 glutenFree = glutenFree
             )
 
-            // Crear un documento con ID generado automáticamente
-            val docRef = db.collection("recetas").document()
-            
-            // Asignar el ID del documento a la receta
-            val recetaConId = receta.copy(id = docRef.id.hashCode())
-            
-            // Guardar la receta
-            docRef.set(recetaConId).await()
-
-            recetaConId
+            receta
         } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al subir receta: ${e.message}")
             e.printStackTrace()
             null
         }
@@ -359,43 +392,81 @@ class DatabaseHelper {
             val recetas = mutableListOf<Recipe>()
             
             for (document in querySnapshot.documents) {
-                // Deserialización manual en lugar de usar toObject
-                val id = document.getLong("id")?.toInt()
-                val title = document.getString("title") ?: ""
-                val image = document.getString("image")
-                val servings = document.getLong("servings")?.toInt()
-                val readyInMinutes = document.getLong("readyInMinutes")?.toInt()
-                val instructions = document.getString("instructions")
-                val summary = document.getString("summary")
-                val vegetarian = document.getBoolean("vegetarian") ?: false
-                val vegan = document.getBoolean("vegan") ?: false
-                val glutenFree = document.getBoolean("glutenFree") ?: false
-                
-                // Obtener dishTypes como lista de strings
-                val dishTypesData = document.get("dishTypes") as? List<*>
-                val dishTypes = dishTypesData?.mapNotNull { it as? String } ?: emptyList()
-                
-                // Para ingredientes, creamos una lista vacía ya que es más complejo deserializarlos
-                // Si necesitas los ingredientes, se puede implementar una deserialización más compleja
-                val ingredients = emptyList<Ingredient>()
-                
-                val receta = Recipe(
-                    id = id,
-                    title = title,
-                    image = image,
-                    servings = servings,
-                    readyInMinutes = readyInMinutes,
-                    instructions = instructions,
-                    extendedIngredients = ingredients,
-                    vegetarian = vegetarian,
-                    vegan = vegan,
-                    dishTypes = dishTypes,
-                    summary = summary,
-                    userId = userId,
-                    glutenFree = glutenFree
-                )
-                
-                recetas.add(receta)
+                try {
+                    // Deserialización manual de los campos principales
+                    val id = document.getLong("id")?.toInt()
+                    val title = document.getString("title") ?: ""
+                    val image = document.getString("image")
+                    val servings = document.getLong("servings")?.toInt()
+                    val readyInMinutes = document.getLong("readyInMinutes")?.toInt()
+                    val instructions = document.getString("instructions")
+                    val summary = document.getString("summary")
+                    val vegetarian = document.getBoolean("vegetarian") ?: false
+                    val vegan = document.getBoolean("vegan") ?: false
+                    val glutenFree = document.getBoolean("glutenFree") ?: false
+                    
+                    // Obtener dishTypes como lista de strings
+                    val dishTypesData = document.get("dishTypes") as? List<*>
+                    val dishTypes = dishTypesData?.mapNotNull { it as? String } ?: emptyList()
+                    
+                    // Deserializar ingredientes
+                    val ingredientesData = document.get("extendedIngredients") as? List<*>
+                    val ingredientes = mutableListOf<Ingredient>()
+                    
+                    ingredientesData?.forEach { item ->
+                        if (item is Map<*, *>) {
+                            val ingredienteId = (item["id"] as? Number)?.toInt() ?: 0
+                            val name = (item["name"] as? String) ?: ""
+                            val amount = (item["amount"] as? Number)?.toDouble() ?: 0.0
+                            val unit = (item["unit"] as? String) ?: ""
+                            
+                            // Crear un objeto Ingredient simplificado con los datos disponibles
+                            val ingrediente = Ingredient(
+                                id = ingredienteId,
+                                name = name,
+                                aisle = "",
+                                image = "",
+                                amount = amount,
+                                unit = unit,
+                                unitShort = "",
+                                unitLong = "",
+                                original = "",
+                                originalName = "",
+                                consistency = "",
+                                possibleUnits = null,
+                                estimatedCost = null,
+                                shoppingListUnits = null,
+                                meta = null,
+                                nutrition = null,
+                                categoryPath = null
+                            )
+                            
+                            ingredientes.add(ingrediente)
+                        }
+                    }
+                    
+                    // Crear el objeto Recipe
+                    val receta = Recipe(
+                        id = id,
+                        title = title,
+                        image = image,
+                        servings = servings,
+                        readyInMinutes = readyInMinutes,
+                        instructions = instructions,
+                        extendedIngredients = ingredientes,
+                        vegetarian = vegetarian,
+                        vegan = vegan,
+                        dishTypes = dishTypes,
+                        summary = summary,
+                        userId = userId,
+                        glutenFree = glutenFree
+                    )
+                    
+                    recetas.add(receta)
+                } catch (e: Exception) {
+                    Log.e("DatabaseHelper", "Error al deserializar receta: ${e.message}")
+                    // Continuar con la siguiente receta si hay un error en esta
+                }
             }
             
             recetas
@@ -407,15 +478,453 @@ class DatabaseHelper {
     }
 
     /**
+     * Obtiene todas las recetas del usuario actual.
+     *
+     * @return Lista de recetas del usuario o lista vacía si no hay recetas o no está autenticado
+     */
+    suspend fun obtenerRecetasUsuarioActual(): List<Recipe> {
+        val userId = auth.currentUser?.uid ?: return emptyList()
+        return try {
+            buscarRecetasPorIdUsuario(userId) ?: emptyList()
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al obtener recetas del usuario: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Actualiza una receta existente en la base de datos.
+     *
+     * @param receta La receta con los datos actualizados
+     * @param nuevaImagen Nueva imagen para la receta (opcional)
+     * @return true si la actualización fue exitosa, false en caso contrario
+     */
+    suspend fun actualizarReceta(receta: Recipe, nuevaImagen: Uri? = null): Boolean {
+        if (auth.currentUser == null || receta.id == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        if (receta.userId != userId) {
+            // Solo el creador puede editar la receta
+            return false
+        }
+        
+        return try {
+            // Identificar el documento por el ID hasheado
+            val querySnapshot = db.collection("recetas")
+                .whereEqualTo("id", receta.id)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return false
+            
+            val docId = querySnapshot.documents.first().id
+            val docRef = db.collection("recetas").document(docId)
+            
+            // Obtener los datos actuales de valoración
+            val docSnapshot = db.collection("recetas").document(docId).get().await()
+            val valoracionPromedio = docSnapshot.getDouble("valoracionPromedio") ?: 0.0
+            val cantidadValoraciones = docSnapshot.getLong("cantidadValoraciones")?.toInt() ?: 0
+            
+            // Subir nueva imagen si existe
+            val imagenUrl = if (nuevaImagen != null) {
+                val storageRef = Firebase.storage.reference
+                val imagenRef = storageRef.child("recetas/${UUID.randomUUID()}")
+                val uploadTask = imagenRef.putFile(nuevaImagen).await()
+                imagenRef.downloadUrl.await().toString()
+            } else {
+                receta.image
+            }
+            
+            // Actualizar datos de la receta
+            val recetaMap = hashMapOf(
+                "id" to receta.id,
+                "title" to receta.title,
+                "image" to imagenUrl,
+                "servings" to receta.servings,
+                "readyInMinutes" to receta.readyInMinutes,
+                "instructions" to receta.instructions,
+                "vegetarian" to receta.vegetarian,
+                "vegan" to receta.vegan,
+                "dishTypes" to receta.dishTypes,
+                "summary" to receta.summary,
+                "userId" to userId,
+                "glutenFree" to receta.glutenFree,
+                "updatedAt" to com.google.firebase.Timestamp.now(),
+                "valoracionPromedio" to valoracionPromedio,
+                "cantidadValoraciones" to cantidadValoraciones
+            )
+            
+            // Actualizar ingredientes
+            val ingredientesMapList = receta.extendedIngredients?.map { ingrediente ->
+                mapOf(
+                    "id" to ingrediente.id,
+                    "name" to ingrediente.name,
+                    "amount" to ingrediente.amount,
+                    "unit" to (ingrediente.unit ?: "")
+                )
+            }
+            
+            if (ingredientesMapList != null) {
+                recetaMap["extendedIngredients"] = ingredientesMapList
+            }
+            
+            // Actualizar la receta
+            docRef.update(recetaMap).await()
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al actualizar receta: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
+     * Elimina una receta de la base de datos.
+     *
+     * @param recetaId ID de la receta a eliminar
+     * @return true si la eliminación fue exitosa, false en caso contrario
+     */
+    suspend fun eliminarReceta(recetaId: Int): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            // Buscar la receta por ID
+            val querySnapshot = db.collection("recetas")
+                .whereEqualTo("id", recetaId)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return false
+            
+            val documento = querySnapshot.documents.first()
+            val recetaUserId = documento.getString("userId")
+            
+            // Verificar que el usuario actual sea el propietario
+            if (recetaUserId != userId) {
+                return false
+            }
+            
+            // Eliminar imagen de storage si existe
+            val imagenUrl = documento.getString("image")
+            if (!imagenUrl.isNullOrEmpty()) {
+                try {
+                    val storageRef = Firebase.storage.getReferenceFromUrl(imagenUrl)
+                    storageRef.delete().await()
+                } catch (e: Exception) {
+                    // Continuar incluso si no se puede eliminar la imagen
+                    Log.w("DatabaseHelper", "No se pudo eliminar la imagen: ${e.message}")
+                }
+            }
+            
+            // Eliminar documento
+            db.collection("recetas").document(documento.id).delete().await()
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar receta: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+
+    /**
      * Borrar de la base de datos el usuario actual
      * @return True si te promete borrar el usuario actual y false en el resto de casos
      */
-    suspend fun borrarCuentaActual() :Boolean{
+    suspend fun borrarCuentaActual(): Boolean {
         if (auth.currentUser == null) {
-                return false;
+            return false
+        }
+        
+        val userId = auth.currentUser!!.uid
+        
+        try {
+            // 1. Primero eliminamos todas las recetas del usuario
+            val recetasSnapshot = db.collection("recetas")
+                .whereEqualTo("userId", userId)
+                .get()
+                .await()
+                
+            // 2. Para cada receta, eliminamos su imagen si existe
+            for (documento in recetasSnapshot.documents) {
+                val imagenUrl = documento.getString("image")
+                if (!imagenUrl.isNullOrEmpty()) {
+                    try {
+                        val storageRef = Firebase.storage.getReferenceFromUrl(imagenUrl)
+                        storageRef.delete().await()
+                    } catch (e: Exception) {
+                        // Continuamos incluso si no se puede eliminar una imagen
+                        Log.w("DatabaseHelper", "No se pudo eliminar la imagen: ${e.message}")
+                    }
+                }
+                
+                // 3. Eliminamos el documento de la receta
+                db.collection("recetas").document(documento.id).delete().await()
             }
-        db.collection("usuarios").document(auth.currentUser!!.uid).delete();
-        return true;
+            
+            // 4. Finalmente eliminamos el documento del usuario
+            db.collection("usuarios").document(userId).delete().await()
+            
+            return true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar cuenta: ${e.message}")
+            e.printStackTrace()
+            return false
+        }
+    }
+
+    /**
+     * Busca usuarios cuyo nombre o nombre de usuario contiene la cadena de búsqueda.
+     * 
+     * @param textoBusqueda Texto para buscar en nombres de usuario
+     * @return Lista de usuarios que coinciden con la búsqueda o una lista vacía si no hay coincidencias
+     */
+    suspend fun buscarUsuariosPorTexto(textoBusqueda: String): List<Usuario> {
+        if (textoBusqueda.length < 2) return emptyList() // Requerir al menos 2 caracteres para buscar
+        
+        return try {
+            val usuarios = mutableListOf<Usuario>()
+            
+            // Primero buscamos por username
+            val queryByUsername = db.collection("usuarios")
+                .orderBy("username")
+                .startAt(textoBusqueda)
+                .endAt(textoBusqueda + "\uf8ff") // El carácter Unicode \uf8ff se usa para búsquedas "starts with"
+                .limit(5) // Limitamos a 5 resultados para evitar sobrecarga
+                .get()
+                .await()
+            
+            // Luego buscamos por nombre
+            val queryByName = db.collection("usuarios")
+                .orderBy("nombre")
+                .startAt(textoBusqueda)
+                .endAt(textoBusqueda + "\uf8ff")
+                .limit(5)
+                .get()
+                .await()
+            
+            // Agregamos los resultados por username
+            for (document in queryByUsername.documents) {
+                document.toObject(Usuario::class.java)?.let { usuario ->
+                    // Añadimos el ID del usuario como propiedad adicional
+                    usuario.id = document.id
+                    usuarios.add(usuario)
+                }
+            }
+            
+            // Agregamos los resultados por nombre, evitando duplicados
+            for (document in queryByName.documents) {
+                document.toObject(Usuario::class.java)?.let { usuario ->
+                    // Verificamos que no esté ya en la lista (para evitar duplicados)
+                    if (usuarios.none { it.id == document.id }) {
+                        usuario.id = document.id
+                        usuarios.add(usuario)
+                    }
+                }
+            }
+            
+            usuarios
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al buscar usuarios por texto: ${e.message}")
+            emptyList()
+        }
+    }
+
+    /**
+     * Añade un comentario y valoración a una receta
+     * 
+     * @param recetaId ID de la receta
+     * @param texto Texto del comentario
+     * @param valoracion Valoración de 1 a 5
+     * @return true si se añadió correctamente, false en caso contrario
+     */
+    suspend fun agregarComentario(recetaId: Int, texto: String, valoracion: Int): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            // Primero obtenemos los datos del usuario para incluir su nombre en el comentario
+            val usuario = getUserProfile() ?: return false
+            
+            val comentario = Comentario(
+                id = UUID.randomUUID().toString(),
+                usuarioId = userId,
+                nombreUsuario = usuario.username,
+                recetaId = recetaId,
+                texto = texto,
+                valoracion = valoracion,
+                fecha = com.google.firebase.Timestamp.now()
+            )
+            
+            // Guardar el comentario en la colección "comentarios"
+            db.collection("comentarios").document(comentario.id).set(comentario).await()
+            
+            // Actualizar el promedio de valoraciones de la receta
+            actualizarValoracionPromedio(recetaId)
+            
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al añadir comentario: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+    
+    /**
+     * Obtiene todos los comentarios para una receta específica
+     * 
+     * @param recetaId ID de la receta
+     * @return Lista de comentarios o lista vacía si no hay comentarios
+     */
+    suspend fun obtenerComentarios(recetaId: Int): List<Comentario> {
+        return try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .orderBy("fecha", Query.Direction.DESCENDING)
+                .get()
+                .await()
+                
+            val comentarios = mutableListOf<Comentario>()
+            
+            for (document in querySnapshot.documents) {
+                document.toObject(Comentario::class.java)?.let { comentario ->
+                    comentarios.add(comentario)
+                }
+            }
+            
+            comentarios
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al obtener comentarios: ${e.message}")
+            e.printStackTrace()
+            emptyList()
+        }
+    }
+    
+    /**
+     * Elimina un comentario (solo puede hacerlo el autor o el dueño de la receta)
+     * 
+     * @param comentarioId ID del comentario
+     * @return true si se eliminó correctamente, false en caso contrario
+     */
+    suspend fun eliminarComentario(comentarioId: String): Boolean {
+        if (auth.currentUser == null) return false
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            val comentarioDoc = db.collection("comentarios").document(comentarioId).get().await()
+            val comentario = comentarioDoc.toObject(Comentario::class.java) ?: return false
+            
+            // Verificar que el usuario actual es el autor del comentario
+            if (comentario.usuarioId != userId) {
+                // Verificar si el usuario es el dueño de la receta
+                val recetaQuery = db.collection("recetas")
+                    .whereEqualTo("id", comentario.recetaId)
+                    .get()
+                    .await()
+                
+                if (recetaQuery.isEmpty) return false
+                
+                val receta = recetaQuery.documents.firstOrNull() ?: return false
+                val recetaUserId = receta.getString("userId")
+                
+                if (recetaUserId != userId) {
+                    // No es ni el autor del comentario ni el dueño de la receta
+                    return false
+                }
+            }
+            
+            // Eliminar comentario
+            db.collection("comentarios").document(comentarioId).delete().await()
+            
+            // Actualizar valoración promedio
+            actualizarValoracionPromedio(comentario.recetaId)
+            
+            true
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al eliminar comentario: ${e.message}")
+            e.printStackTrace()
+            false
+        }
+    }
+    
+    /**
+     * Actualiza la valoración promedio de una receta
+     */
+    private suspend fun actualizarValoracionPromedio(recetaId: Int) {
+        try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .get()
+                .await()
+                
+            var sumaValoraciones = 0
+            var cantidadValoraciones = 0
+            
+            for (document in querySnapshot.documents) {
+                val valoracion = document.getLong("valoracion")?.toInt() ?: 0
+                if (valoracion > 0) {
+                    sumaValoraciones += valoracion
+                    cantidadValoraciones++
+                }
+            }
+            
+            val valoracionPromedio = if (cantidadValoraciones > 0) {
+                sumaValoraciones.toDouble() / cantidadValoraciones
+            } else {
+                0.0
+            }
+            
+            // Buscar la receta por ID
+            val recetasQuery = db.collection("recetas")
+                .whereEqualTo("id", recetaId)
+                .get()
+                .await()
+                
+            if (!recetasQuery.isEmpty) {
+                val docId = recetasQuery.documents.first().id
+                // Actualizar la valoración promedio
+                db.collection("recetas").document(docId).update(
+                    mapOf(
+                        "valoracionPromedio" to valoracionPromedio,
+                        "cantidadValoraciones" to cantidadValoraciones
+                    )
+                ).await()
+            }
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al actualizar valoración promedio: ${e.message}")
+            e.printStackTrace()
+        }
+    }
+    
+    /**
+     * Verifica si el usuario ya ha comentado una receta
+     * 
+     * @param recetaId ID de la receta
+     * @return El comentario existente si el usuario ya ha comentado, null en caso contrario
+     */
+    suspend fun obtenerComentarioUsuario(recetaId: Int): Comentario? {
+        if (auth.currentUser == null) return null
+        
+        val userId = auth.currentUser!!.uid
+        
+        return try {
+            val querySnapshot = db.collection("comentarios")
+                .whereEqualTo("recetaId", recetaId)
+                .whereEqualTo("usuarioId", userId)
+                .get()
+                .await()
+                
+            if (querySnapshot.isEmpty) return null
+            
+            querySnapshot.documents.firstOrNull()?.toObject(Comentario::class.java)
+        } catch (e: Exception) {
+            Log.e("DatabaseHelper", "Error al verificar comentario existente: ${e.message}")
+            e.printStackTrace()
+            null
+        }
     }
 
 }

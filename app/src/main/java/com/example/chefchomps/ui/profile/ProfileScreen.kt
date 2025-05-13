@@ -1,15 +1,18 @@
 package com.example.chefchomps.ui.profile
 
+import android.content.Intent
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chefchomps.model.Usuario
+import com.example.chefchomps.ui.MisRecetasActivity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,6 +66,7 @@ fun ProfileScreen(
                 usuario = state.usuario,
                 onSaveChanges = viewModel::updateUserProfile,
                 onSignOut = viewModel::signOut,
+                onDeleteAccount = viewModel::deleteUserAccount,
                 modifier = modifier
             )
         }
@@ -75,6 +79,7 @@ private fun ProfileContent(
     usuario: Usuario,
     onSaveChanges: (Usuario) -> Unit,
     onSignOut: () -> Unit,
+    onDeleteAccount: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var nombre by remember { mutableStateOf(usuario.nombre) }
@@ -83,6 +88,7 @@ private fun ProfileContent(
     var password by remember { mutableStateOf(usuario.password) }
     var username by remember { mutableStateOf(usuario.username) }
     var isEditing by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     Column(
         modifier = modifier
@@ -168,11 +174,54 @@ private fun ProfileContent(
             }
         }
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         Button(
             onClick = onSignOut,
             modifier = Modifier.fillMaxWidth()
         ) {
             Text("Cerrar sesión")
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Botón para eliminar cuenta
+        var mostrarDialogoConfirmacion by remember { mutableStateOf(false) }
+        
+        Button(
+            onClick = { mostrarDialogoConfirmacion = true },
+            modifier = Modifier.fillMaxWidth(),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.error
+            )
+        ) {
+            Text("Eliminar mi cuenta")
+        }
+        
+        // Diálogo de confirmación para eliminar cuenta
+        if (mostrarDialogoConfirmacion) {
+            AlertDialog(
+                onDismissRequest = { mostrarDialogoConfirmacion = false },
+                title = { Text("Eliminar cuenta") },
+                text = { Text("¿Estás seguro que deseas eliminar tu cuenta? Esta acción no se puede deshacer y perderás todas tus recetas y datos personales.") },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            mostrarDialogoConfirmacion = false
+                            onDeleteAccount()
+                        }
+                    ) {
+                        Text("Eliminar")
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = { mostrarDialogoConfirmacion = false }
+                    ) {
+                        Text("Cancelar")
+                    }
+                }
+            )
         }
     }
 }
@@ -192,6 +241,7 @@ fun ProfileScreenPreview() {
         usuario = previewUsuario,
         onSaveChanges = {},
         onSignOut = {},
+        onDeleteAccount = {},
         modifier = Modifier
     )
 }

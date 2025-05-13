@@ -1,8 +1,12 @@
 package com.example.chefchomps.ui
 
+import ChefChompsTema
+import android.app.Activity.RESULT_OK
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -34,9 +38,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,14 +58,43 @@ import coil.compose.AsyncImage
 import com.example.chefchomps.R
 import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.model.Ingredient
+import com.example.chefchomps.model.Recipe
+import com.google.gson.Gson
 import kotlinx.coroutines.launch
+
+// Constantes para SharedPreferences
+private const val PREFS_NAME = "ChefChompsPrefs"
+private const val KEY_DARK_THEME = "dark_theme"
 
 class NuevaReceta : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Leer la preferencia del tema oscuro
+        val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val savedDarkTheme = sharedPref.getBoolean(KEY_DARK_THEME, false)
+        
+        // Obtener los datos de la receta si estamos en modo edición
+        val isEditMode = intent.getBooleanExtra("is_edit_mode", false)
+        val recetaJson = intent.getStringExtra("receta_json")
+        val recetaParaEditar = if (isEditMode && recetaJson != null) {
+            try {
+                Gson().fromJson(recetaJson, Recipe::class.java)
+            } catch (e: Exception) {
+                Log.e("NuevaReceta", "Error al parsear receta: ${e.message}")
+                null
+            }
+        } else null
+        
         setContent {
-            MaterialTheme {
-                NuevaRecetaScreen(onBack = { finish() })
+            ChefChompsTema(darkTheme = savedDarkTheme) {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    NuevaRecetaScreen(
+                        onBack = { finish() },
+                        isEditMode = isEditMode,
+                        recetaParaEditar = recetaParaEditar
+                    )
+                }
             }
         }
     }
@@ -67,19 +102,70 @@ class NuevaReceta : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun NuevaRecetaScreen(onBack: () -> Unit) {
-    var titulo by remember { mutableStateOf("") }
+fun NuevaRecetaScreen(
+    onBack: () -> Unit,
+    isEditMode: Boolean = false,
+    recetaParaEditar: Recipe? = null
+) {
+    // Inicializar valores, usar datos de la receta si estamos en modo edición
+    var titulo by remember { mutableStateOf(recetaParaEditar?.title ?: "") }
     var imagenUri by remember { mutableStateOf<Uri?>(null) }
-    var ingredientes by remember { mutableStateOf(listOf(Ingredient(0, "", "", "", 0.0, "", "", "", null, null, "", null, "", "", null, null, null))) }
-    var pasos by remember { mutableStateOf(listOf("")) }
-    var tiempoPreparacion by remember { mutableStateOf("") }
-    var porciones by remember { mutableStateOf("") }
-    var descripcion by remember { mutableStateOf("") }
-    var esVegetariana by remember { mutableStateOf(false) }
-    var esVegana by remember { mutableStateOf(false) }
-    var tipoPlato by remember { mutableStateOf("Principal") }
+    var imagenUrl by remember { mutableStateOf(recetaParaEditar?.image) }
+    var ingredientes by remember { 
+        mutableStateOf(
+            recetaParaEditar?.extendedIngredients ?: 
+            listOf(Ingredient(0, "", "", "", 0.0, "", "", "", null, null, "", null, "", "", null, null, null))
+        ) 
+    }
+    var pasos by remember { 
+        mutableStateOf(
+            recetaParaEditar?.instructions?.split("\n") ?: 
+            listOf("")
+        ) 
+    }
+    var tiempoPreparacion by remember { 
+        mutableStateOf(
+            recetaParaEditar?.readyInMinutes?.toString() ?: 
+            ""
+        ) 
+    }
+    var porciones by remember { 
+        mutableStateOf(
+            recetaParaEditar?.servings?.toString() ?: 
+            ""
+        ) 
+    }
+    var descripcion by remember { 
+        mutableStateOf(
+            recetaParaEditar?.summary ?: 
+            ""
+        ) 
+    }
+    var esVegetariana by remember { 
+        mutableStateOf(
+            recetaParaEditar?.vegetarian ?: 
+            false
+        ) 
+    }
+    var esVegana by remember { 
+        mutableStateOf(
+            recetaParaEditar?.vegan ?: 
+            false
+        ) 
+    }
+    var tipoPlato by remember { 
+        mutableStateOf(
+            recetaParaEditar?.dishTypes?.firstOrNull() ?: 
+            "Principal"
+        ) 
+    }
+    var glutenFree by remember { 
+        mutableStateOf(
+            recetaParaEditar?.glutenFree ?: 
+            false
+        ) 
+    }
     var isLoading by remember { mutableStateOf(false) }
-    var glutenFree by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val databaseHelper = remember { DatabaseHelper() }
@@ -89,13 +175,16 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
-        uri?.let { imagenUri = it }
+        uri?.let { 
+            imagenUri = it
+            imagenUrl = null  // Si seleccionamos una nueva imagen, limpiamos la URL anterior
+        }
     }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Nueva Receta") },
+                title = { Text(if (isEditMode) "Editar Receta" else "Nueva Receta") },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
@@ -143,6 +232,15 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
                     AsyncImage(
                         model = imagenUri,
                         contentDescription = "Imagen de la receta",
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(200.dp)
+                    )
+                } else if (imagenUrl != null && imagenUrl!!.isNotEmpty()) {
+                    AsyncImage(
+                        model = imagenUrl,
+                        contentDescription = "Imagen de la receta",
+                        placeholder = painterResource(id = R.drawable.ic_launcher_foreground),
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(200.dp)
@@ -346,89 +444,101 @@ fun NuevaRecetaScreen(onBack: () -> Unit) {
             item {
                 Button(
                     onClick = {
-                        val camposObligatorios = listOf(
-                            titulo to "Título",
-                            tiempoPreparacion to "Tiempo de preparación",
-                            porciones to "Porciones"
-                        )
-
-                        val camposInvalidos = camposObligatorios.filter { it.first.isBlank() }
-
-                        if (camposInvalidos.isNotEmpty()) {
+                        if (titulo.isBlank()) {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar(
-                                    "Faltan campos obligatorios: ${
-                                        camposInvalidos.joinToString { it.second }
-                                    }"
-                                )
+                                snackbarHostState.showSnackbar("El título es obligatorio")
                             }
                             return@Button
                         }
 
-                        if (ingredientes.any { it.name.isBlank() }) {
+                        if (ingredientes.isEmpty() || ingredientes.all { it.name.isBlank() }) {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Todos los ingredientes deben tener nombre")
+                                snackbarHostState.showSnackbar("Debe agregar al menos un ingrediente")
                             }
                             return@Button
                         }
 
-                        if (pasos.any { it.isBlank() }) {
+                        if (pasos.isEmpty() || pasos.all { it.isBlank() }) {
                             coroutineScope.launch {
-                                snackbarHostState.showSnackbar("Todos los pasos deben tener instrucciones")
+                                snackbarHostState.showSnackbar("Debe agregar al menos un paso")
                             }
                             return@Button
                         }
 
                         isLoading = true
                         coroutineScope.launch {
-                            val recetaCreada = databaseHelper.subirReceta(
-                                titulo = titulo,
-                                imagenUri = imagenUri,
-                                ingredientes = ingredientes.filter { it.name.isNotBlank() },
-                                pasos = pasos.filter { it.isNotBlank() },
-                                tiempoPreparacion = tiempoPreparacion.toInt(),
-                                descripcion = descripcion,
-                                porciones = porciones.toInt(),
-                                esVegetariana = esVegetariana,
-                                esVegana = esVegana,
-                                tipoPlato = tipoPlato,
-                                glutenFree = glutenFree
-                            )
+                            try {
+                                val tiempo = tiempoPreparacion.toIntOrNull() ?: 0
+                                val porcionesInt = porciones.toIntOrNull() ?: 1
 
-                            isLoading = false
-                            
-                            if (recetaCreada != null) {
-                                // Convertir la receta a JSON para enviarla a la siguiente actividad
-                                val gson = com.google.gson.Gson()
-                                val recetaJson = gson.toJson(recetaCreada)
-                                
-                                // Navegar a la pantalla para ver la receta
-                                val intent = Intent(context, VerReceta::class.java)
-                                intent.putExtra("receta_json", recetaJson)
-                                context.startActivity(intent)
-                                
-                                // Mostrar mensaje de éxito
-                                snackbarHostState.showSnackbar("¡Receta creada con éxito!")
-                                
-                                // Cerrar la actividad actual
-                                (context as? ComponentActivity)?.finish()
-                            } else {
-                                snackbarHostState.showSnackbar("Error al subir la receta")
+                                if (isEditMode && recetaParaEditar != null) {
+                                    // Actualizar receta existente
+                                    val recetaActualizada = recetaParaEditar.copy(
+                                        title = titulo,
+                                        summary = descripcion,
+                                        readyInMinutes = tiempo,
+                                        servings = porcionesInt,
+                                        instructions = pasos.joinToString("\n"),
+                                        extendedIngredients = ingredientes,
+                                        vegetarian = esVegetariana,
+                                        vegan = esVegana,
+                                        dishTypes = listOf(tipoPlato),
+                                        glutenFree = glutenFree,
+                                        image = imagenUrl
+                                    )
+
+                                    val actualizado = databaseHelper.actualizarReceta(recetaActualizada, imagenUri)
+                                    
+                                    if (actualizado) {
+                                        snackbarHostState.showSnackbar("Receta actualizada correctamente")
+                                        // Establecer resultado OK para que la actividad anterior sepa que la edición fue exitosa
+                                        (context as? ComponentActivity)?.setResult(RESULT_OK)
+                                        onBack()
+                                    } else {
+                                        snackbarHostState.showSnackbar("No se pudo actualizar la receta")
+                                    }
+                                } else {
+                                    // Crear nueva receta
+                                    val receta = databaseHelper.subirReceta(
+                                        titulo = titulo,
+                                        imagenUri = imagenUri,
+                                        ingredientes = ingredientes,
+                                        pasos = pasos,
+                                        tiempoPreparacion = tiempo,
+                                        descripcion = descripcion,
+                                        porciones = porcionesInt,
+                                        esVegetariana = esVegetariana,
+                                        esVegana = esVegana,
+                                        tipoPlato = tipoPlato,
+                                        glutenFree = glutenFree
+                                    )
+
+                                    if (receta != null) {
+                                        snackbarHostState.showSnackbar("Receta guardada correctamente")
+                                        // Establecer resultado OK para que la actividad anterior sepa que la creación fue exitosa
+                                        (context as? ComponentActivity)?.setResult(RESULT_OK)
+                                        onBack()
+                                    } else {
+                                        snackbarHostState.showSnackbar("Error al guardar la receta")
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                snackbarHostState.showSnackbar("Error: ${e.message}")
+                            } finally {
+                                isLoading = false
                             }
                         }
                     },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(50.dp),
+                    modifier = Modifier.fillMaxWidth(),
                     enabled = !isLoading
                 ) {
                     if (isLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.size(20.dp),
+                            modifier = Modifier.size(24.dp),
                             color = MaterialTheme.colorScheme.onPrimary
                         )
                     } else {
-                        Text("Subir Receta")
+                        Text(if (isEditMode) "Actualizar receta" else "Guardar receta")
                     }
                 }
             }

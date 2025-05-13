@@ -2,6 +2,7 @@ package com.example.chefchomps.ui
 
 import ChefChompsTema
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -53,12 +54,21 @@ import com.example.chefchomps.logica.ApiCLient.Companion.findRecipesByIngredient
 import com.example.chefchomps.model.Recipe
 import kotlinx.coroutines.runBlocking
 
+// Constantes para SharedPreferences
+private const val PREFS_NAME = "ChefChompsPrefs"
+private const val KEY_DARK_THEME = "dark_theme"
+
 class Search :ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Leer la preferencia del tema oscuro
+        val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        val savedDarkTheme = sharedPref.getBoolean(KEY_DARK_THEME, false)
+        
         setContent {
-            ChefChompsTema(darkTheme = false){
+            ChefChompsTema(darkTheme = savedDarkTheme){
                 Surface (modifier = Modifier.fillMaxSize())
                 {
                     Search()

@@ -1,9 +1,7 @@
 package com.example.chefchomps.ui
 
-import ChefChompsTema
 import LabeledMaterialSwitch
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -65,7 +63,6 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.logica.ApiCLient.Companion.autocompleteRecipes
 import com.example.chefchomps.logica.DatabaseHelper
-import com.example.chefchomps.ui.MisRecetasActivity
 import com.example.chefchomps.ui.profile.ProfileScreen
 import com.example.chefchomps.ui.profile.ProfileViewModel
 import kotlinx.coroutines.runBlocking
@@ -82,25 +79,14 @@ class PaginaPrincipal : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        
-        // Leer la preferencia del tema oscuro
-        val sharedPref = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val savedDarkTheme = sharedPref.getBoolean(KEY_DARK_THEME, false)
-        
+
+        ThemeManager.initialize(this)
+
         setContent {
-            // Usar el valor guardado como estado inicial
-            var darkTheme by remember { mutableStateOf(savedDarkTheme) }
-            
-            // Guardar el cambio de tema cuando cambie
-            LaunchedEffect(darkTheme) {
-                sharedPref.edit().putBoolean(KEY_DARK_THEME, darkTheme).apply()
-            }
-            
-            ChefChompsTema(darkTheme = darkTheme) {
+            ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     PaginaPrincipal(
-                        darkTheme = darkTheme,
-                        onThemeChange = { darkTheme = it }
+                        onThemeChange = { ThemeManager.setDarkTheme(it, this) }
                     )
                 }
             }

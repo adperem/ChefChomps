@@ -5,6 +5,7 @@ import android.util.Log
 import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Usuario
+import com.google.android.gms.tasks.Task
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthUserCollisionException

@@ -17,12 +17,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -46,14 +46,20 @@ class PasswordResetActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
-                PasswordResetScreen(
-                    onBack = { finish() },
-                    onSuccess = {
-                        Toast.makeText(this, "Contraseña actualizada con éxito", Toast.LENGTH_SHORT).show()
-                        finish()
-                    }
-                )
+            ChefChompsAppTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    PasswordResetScreen(
+                        onBack = { finish() },
+                        onSuccess = {
+                            Toast.makeText(
+                                this,
+                                "Contraseña actualizada con éxito",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            finish()
+                        }
+                    )
+                }
             }
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
@@ -48,9 +49,16 @@ class Login : ComponentActivity() {
      */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Inicializar ThemeManager para cargar la preferencia del tema
+        ThemeManager.initialize(this)
+
         setContent {
-            LoginLayout { message ->
-                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            ChefChompsAppTheme { // Usar el tema global
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    LoginLayout { message ->
+                        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+                    }
+                }
             }
         }
     }

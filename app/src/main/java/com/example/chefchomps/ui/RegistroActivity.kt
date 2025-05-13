@@ -42,7 +42,7 @@ class RegistroActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     RegistroLayout(
                         showToast = { mensaje ->

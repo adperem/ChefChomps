@@ -73,7 +73,7 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
     var comentarioUsuario by remember { mutableStateOf<Comentario?>(null) }
     val databaseHelper = remember { DatabaseHelper() }
     val coroutineScope = rememberCoroutineScope()
-    
+    val databasegelper =DatabaseHelper()
     // Cargar comentarios
     LaunchedEffect(recipe.id) {
         if (recipe.id != null) {
@@ -194,69 +194,79 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(8.dp))
             
             // Formulario para añadir comentario si no hay uno del usuario actual
-            if (comentarioUsuario == null) {
-                ComentarioForm(
-                    onSubmit = { texto, valoracion ->
-                        recipe.id?.let { recetaId ->
-                            coroutineScope.launch {
-                                isLoading = true
-                                try {
-                                    val result = databaseHelper.agregarComentario(
-                                        recetaId = recetaId,
-                                        texto = texto,
-                                        valoracion = valoracion
-                                    )
-                                    if (result) {
-                                        // Recargar comentarios
-                                        comentarios = databaseHelper.obtenerComentarios(recetaId)
-                                        comentarioUsuario = databaseHelper.obtenerComentarioUsuario(recetaId)
-                                    }
-                                } catch (e: Exception) {
-                                    // Manejar el error silenciosamente
-                                } finally {
-                                    isLoading = false
-                                }
-                            }
-                        }
-                    }
-                )
-            } else {
-                // Mostrar el comentario del usuario actual
-                Text(
-                    text = "Tu valoración:",
-                    style = MaterialTheme.typography.bodyLarge,
-                    fontWeight = FontWeight.Bold
-                )
-                
-                // Usar comentarioUsuario de forma segura
-                comentarioUsuario?.let { comentario ->
-                    ComentarioItem(
-                        comentario = comentario,
-                        esPropio = true,
-                        onDelete = {
-                            coroutineScope.launch {
-                                isLoading = true
-                                try {
-                                    if (databaseHelper.eliminarComentario(comentario.id)) {
-                                        comentarioUsuario = null
-                                        // Recargar comentarios
-                                        recipe.id?.let { recetaId ->
-                                            comentarios = databaseHelper.obtenerComentarios(recetaId)
+            if (databasegelper.getCurrentUser()!=null) {
+                if (comentarioUsuario == null) {
+                    ComentarioForm(
+                        onSubmit = { texto, valoracion ->
+                            recipe.id?.let { recetaId ->
+                                coroutineScope.launch {
+                                    isLoading = true
+                                    try {
+                                        val result = databaseHelper.agregarComentario(
+                                            recetaId = recetaId,
+                                            texto = texto,
+                                            valoracion = valoracion
+                                        )
+                                        if (result) {
+                                            // Recargar comentarios
+                                            comentarios =
+                                                databaseHelper.obtenerComentarios(recetaId)
+                                            comentarioUsuario =
+                                                databaseHelper.obtenerComentarioUsuario(recetaId)
                                         }
+                                    } catch (e: Exception) {
+                                        // Manejar el error silenciosamente
+                                    } finally {
+                                        isLoading = false
                                     }
-                                } catch (e: Exception) {
-                                    // Manejar el error silenciosamente
-                                } finally {
-                                    isLoading = false
                                 }
                             }
                         }
                     )
+                } else {
+                    // Mostrar el comentario del usuario actual
+                    Text(
+                        text = "Tu valoración:",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    // Usar comentarioUsuario de forma segura
+                    comentarioUsuario?.let { comentario ->
+                        ComentarioItem(
+                            comentario = comentario,
+                            esPropio = true,
+                            onDelete = {
+                                coroutineScope.launch {
+                                    isLoading = true
+                                    try {
+                                        if (databaseHelper.eliminarComentario(comentario.id)) {
+                                            comentarioUsuario = null
+                                            // Recargar comentarios
+                                            recipe.id?.let { recetaId ->
+                                                comentarios =
+                                                    databaseHelper.obtenerComentarios(recetaId)
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        // Manejar el error silenciosamente
+                                    } finally {
+                                        isLoading = false
+                                    }
+                                }
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
                 }
-                
-                Spacer(modifier = Modifier.height(16.dp))
+            }else{
+                Text(
+                    text = "Necesitas una cuenta antes de poder comentar",
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = FontWeight.Bold
+                )
             }
-            
             // Indicador de carga
             if (isLoading) {
                 CircularProgressIndicator(

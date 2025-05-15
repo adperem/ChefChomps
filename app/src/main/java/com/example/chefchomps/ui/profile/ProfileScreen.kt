@@ -13,7 +13,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,6 +31,14 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.example.chefchomps.model.Usuario
 
+/**
+ * Pantalla de perfil de usuario que muestra la información del usuario autenticado.
+ *
+ * @param viewModel ViewModel que proporciona el estado de la UI y maneja las acciones del usuario.
+ * @param onNavigateToLogin Función lambda para navegar a la pantalla de login cuando el usuario
+ * no está autenticado o cierra sesión.
+ * @param modifier Modificador para personalizar el diseño de la pantalla.
+ */
 @Composable
 fun ProfileScreen(
     viewModel: ProfileViewModel,
@@ -90,6 +97,16 @@ fun ProfileScreen(
     }
 }
 
+/**
+ * Composable privado que muestra el formulario de perfil del usuario, permitiendo
+ * visualizar y editar los datos del usuario, cerrar sesión o eliminar la cuenta.
+ *
+ * @param usuario Objeto [Usuario] con los datos actuales del usuario.
+ * @param onSaveChanges Función lambda para guardar los cambios en el perfil.
+ * @param onSignOut Función lambda para cerrar la sesión del usuario.
+ * @param onDeleteAccount Función lambda para eliminar la cuenta del usuario.
+ * @param modifier Modificador para personalizar el diseño del contenido.
+ */
 @Composable
 private fun ProfileContent(
     usuario: Usuario,
@@ -242,6 +259,9 @@ private fun ProfileContent(
     }
 }
 
+/**
+ * Vista previa del contenido del perfil con datos de ejemplo.
+ */
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenPreview() {
@@ -262,6 +282,9 @@ fun ProfileScreenPreview() {
     )
 }
 
+/**
+ * Vista previa de la pantalla de perfil en estado de carga.
+ */
 @Preview(showBackground = true)
 @Composable
 fun ProfileScreenLoadingPreview() {

@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
+/**
+ * ViewModel que gestiona la lógica de negocio para la pantalla de perfil de usuario.
+ */
 class ProfileViewModel : ViewModel() {
     private val databaseHelper = DatabaseHelper()
     
@@ -29,6 +32,9 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Carga el perfil del usuario autenticado desde Firestore de manera asíncrona.
+     */
     private fun loadUserProfile() {
         viewModelScope.launch {
             try {
@@ -41,6 +47,11 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Actualiza el perfil del usuario en Firestore y, si es necesario, el email en Firebase Authentication.
+     *
+     * @param usuario Usuario con los datos actualizados del perfil.
+     */
     fun updateUserProfile(usuario: Usuario) {
         viewModelScope.launch {
             try {
@@ -64,10 +75,17 @@ class ProfileViewModel : ViewModel() {
         }
     }
 
+    /**
+     * Cierra la sesión del usuario actual utilizando DatabaseHelper.
+     */
     fun signOut() {
         databaseHelper.signOut()
     }
 
+    /**
+     * Elimina la cuenta del usuario actual, incluyendo sus datos en Firestore y su autenticación
+     * en Firebase Authentication.
+     */
     fun deleteUserAccount() {
         viewModelScope.launch {
             try {
@@ -92,6 +110,10 @@ class ProfileViewModel : ViewModel() {
     }
 }
 
+/**
+ * Clase sellada que representa los posibles estados de la interfaz de usuario
+ * para la pantalla de perfil.
+ */
 sealed class ProfileUiState {
     object Loading : ProfileUiState()
     object NotAuthenticated : ProfileUiState()

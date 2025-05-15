@@ -479,56 +479,32 @@ fun RatingBar(
     modifier: Modifier = Modifier
 ) {
     Row(modifier = modifier) {
-        val fullStars = rating.toInt()
+        var fullStars = rating.toInt()
         val fractionalPart = rating - fullStars
-        
-        // Mostramos estrellas completas
-        repeat(fullStars) {
-            Icon(
-                imageVector = Icons.Default.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
-            )
-        }
-        
-        // Mostramos una estrella parcialmente llena para la parte fraccionaria
-        if (fractionalPart > 0) {
-            // En lugar de usar StarHalf, usamos un Box con una estrella llena
-            // y aplicamos un clip para mostrar solo la parte proporcional
-            Box(modifier = Modifier.size(24.dp)) {
-                // Estrella vacía de fondo
+        (1..fullStars).forEach { index ->
                 Icon(
-                    imageVector = Icons.Outlined.Star,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.fillMaxSize()
+                    imageVector = if (index <= fullStars) Icons.Default.Star else Icons.Outlined.Star,
+                    contentDescription = "Valoración $index",
+                    tint = if (index <= fullStars) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                 )
-                
-                // Estrella llena con clip para mostrar la parte proporcional
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .clip(
-                            ClipShape(fraction = fractionalPart)
-                        )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.fillMaxSize()
-                    )
-                }
-            }
+
         }
-        
-        // Mostramos estrellas vacías para completar 5 estrellas
-        repeat(5 - fullStars - (if (fractionalPart > 0) 1 else 0)) {
+        if(fractionalPart>0){
+            Icon(
+                imageVector =  Icons.Default.Star ,
+                contentDescription = "Valoración ${fullStars+1}",
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.clip(ClipShape(fractionalPart))
+            )
+            fullStars++
+        }
+        (fullStars+1..5).forEach { index ->
             Icon(
                 imageVector = Icons.Outlined.Star,
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary
+                contentDescription = "Valoración $index",
+                tint =  MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
+
         }
     }
 }

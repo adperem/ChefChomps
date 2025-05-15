@@ -86,9 +86,7 @@ class PaginaPrincipal : ComponentActivity() {
             ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     PaginaPrincipal(
-                        onThemeChange = { enabled ->
-                            ThemeManager.setDarkTheme(enabled, this)
-                        }
+                        onThemeChange = { ThemeManager.setDarkTheme(it, this) }
                     )
                 }
             }
@@ -115,7 +113,6 @@ class PaginaPrincipal : ComponentActivity() {
         var showMenu by remember { mutableStateOf(false) }
         var showProfile by remember { mutableStateOf(false) }
         val profileViewModel = remember { ProfileViewModel() }
-        val darkTheme by LocalDarkTheme.current
 
         var searchText by remember { mutableStateOf("") }
         var isSearching by remember { mutableStateOf(false) }
@@ -125,7 +122,7 @@ class PaginaPrincipal : ComponentActivity() {
         val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
         // Inicializar con recetas aleatorias si no hay recetas en el ViewModel
-        LaunchedEffect(Unit) {
+        LaunchedEffect(darkTheme) {
             if (uiState.getlist().isEmpty()) {
                 isSearching = true  // Mostrar indicador de carga mientras se obtienen las recetas
                 try {
@@ -236,12 +233,12 @@ class PaginaPrincipal : ComponentActivity() {
                                 text = {
                                     LabeledMaterialSwitch(
                                         checked = darkTheme,
-                                        onCheckedChange = { checked ->
-                                            onThemeChange(checked)
+                                        onCheckedChange = { 
+                                            onThemeChange(it)
                                             showMenu = false
                                         },
                                         label = if (darkTheme) "Modo Claro" else "Modo Oscuro",
-                                        modifier = Modifier.weight(1f)
+                                        modifier = Modifier.fillMaxWidth()
                                     )
                                 },
                                 onClick = {

@@ -36,6 +36,9 @@ import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.ui.components.DetalleRecetaContent
 import com.google.gson.Gson
 
+/**
+ * Clase que contiene la funcion para ver receta
+ */
 class VerReceta : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +79,12 @@ class VerReceta : ComponentActivity() {
     }
 }
 
+/***
+ * Componible reusabke para poder ver una receta
+ * @param receta receta a ser mostrada
+ * @param onBack una funcion que se ejecuta cuando se hace click a la fecha ←
+ * @param onContinuar una funcion que se ejecuta cuando se hace click a la Continuar
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VerRecetaScreen(

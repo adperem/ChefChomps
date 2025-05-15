@@ -53,6 +53,9 @@ import kotlinx.coroutines.runBlocking
 private const val PREFS_NAME = "ChefChompsPrefs"
 private const val KEY_DARK_THEME = "dark_theme"
 
+/***
+ * Clase que contiene la funcion para buscar por lista de String
+ */
 class Search :ComponentActivity(){
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -73,7 +76,7 @@ class Search :ComponentActivity(){
     }
 
     /***
-     * Pagina de inicio para la aplicacion
+     * Busca por una lista de string
      * @param uiState modificador que define comportamiento (opcional)
      * @param funcion una funcion que recibe una lista de string(ingredientes) y devuelve lista de recetas (opcional)
      */

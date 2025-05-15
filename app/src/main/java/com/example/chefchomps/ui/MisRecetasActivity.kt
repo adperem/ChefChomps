@@ -70,7 +70,9 @@ import kotlinx.coroutines.launch
 private const val PREFS_NAME = "ChefChompsPrefs"
 private const val KEY_DARK_THEME = "dark_theme"
 private const val EDIT_RECIPE_REQUEST_CODE = 1001
-
+/**
+ * Clase que contiene todas las componible relacionadas con recetas creadas por el usuario
+ */
 class MisRecetasActivity : ComponentActivity() {
     // Variable para mantener la lista de recetas
     private val misRecetasState = mutableStateOf<List<Recipe>>(emptyList())
@@ -107,7 +109,9 @@ class MisRecetasActivity : ComponentActivity() {
             }
         }
     }
-    
+    /**
+     * Carga todas las recetas del usrio actual
+     */
     @OptIn(DelicateCoroutinesApi::class)
     private fun cargarRecetas() {
         GlobalScope.launch(Dispatchers.Main) {

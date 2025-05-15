@@ -60,10 +60,13 @@ import com.example.chefchomps.model.Recipe
 import com.google.gson.Gson
 import kotlinx.coroutines.launch
 
+
 // Constantes para SharedPreferences
 private const val PREFS_NAME = "ChefChompsPrefs"
 private const val KEY_DARK_THEME = "dark_theme"
-
+/**
+ * Clase que contiene la composable para poder crear nuevas recetas
+ */
 class NuevaReceta : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,7 +100,9 @@ class NuevaReceta : ComponentActivity() {
         }
     }
 }
-
+/**
+ * Componible reusable para poder crear nuevas recetas
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NuevaRecetaScreen(

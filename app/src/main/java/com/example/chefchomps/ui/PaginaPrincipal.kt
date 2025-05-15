@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -107,7 +106,6 @@ class PaginaPrincipal : ComponentActivity() {
     fun PaginaPrincipal(
         modifier: Modifier = Modifier,
         uiState: ViewModelPaginaPrincipal = ViewModelPaginaPrincipal(),
-        darkTheme: Boolean = false,
         onThemeChange: (Boolean) -> Unit = {}
     ) {
         val context = LocalContext.current
@@ -121,7 +119,6 @@ class PaginaPrincipal : ComponentActivity() {
         var isSearching by remember { mutableStateOf(false) }
         val focusManager = LocalFocusManager.current
         val textFieldFocusRequester = remember { FocusRequester() }
-        val state = rememberScrollState()
         val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
         // Inicializar con recetas aleatorias si no hay recetas en el ViewModel

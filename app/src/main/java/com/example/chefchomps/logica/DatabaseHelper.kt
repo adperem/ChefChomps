@@ -760,9 +760,7 @@ class DatabaseHelper {
             
             // Guardar el comentario en la colección "comentarios"
             db.collection("comentarios").document(comentario.id).set(comentario).await()
-            
-            // Actualizar el promedio de valoraciones de la receta
-            actualizarValoracionPromedio(recetaId)
+
             
             true
         } catch (e: Exception) {
@@ -838,9 +836,7 @@ class DatabaseHelper {
             
             // Eliminar comentario
             db.collection("comentarios").document(comentarioId).delete().await()
-            
-            // Actualizar valoración promedio
-            actualizarValoracionPromedio(comentario.recetaId)
+
             
             true
         } catch (e: Exception) {
@@ -849,56 +845,6 @@ class DatabaseHelper {
             false
         }
     }
-    
-    /**
-     * Actualiza la valoración promedio de una receta
-     */
-    private suspend fun actualizarValoracionPromedio(recetaId: Int) {
-        try {
-            val querySnapshot = db.collection("comentarios")
-                .whereEqualTo("recetaId", recetaId)
-                .get()
-                .await()
-                
-            var sumaValoraciones = 0
-            var cantidadValoraciones = 0
-            
-            for (document in querySnapshot.documents) {
-                val valoracion = document.getLong("valoracion")?.toInt() ?: 0
-                if (valoracion > 0) {
-                    sumaValoraciones += valoracion
-                    cantidadValoraciones++
-                }
-            }
-            
-            val valoracionPromedio = if (cantidadValoraciones > 0) {
-                sumaValoraciones.toDouble() / cantidadValoraciones
-            } else {
-                0.0
-            }
-            
-            // Buscar la receta por ID
-            val recetasQuery = db.collection("recetas")
-                .whereEqualTo("id", recetaId)
-                .get()
-                .await()
-                
-            if (!recetasQuery.isEmpty) {
-                val docId = recetasQuery.documents.first().id
-                // Actualizar la valoración promedio
-                db.collection("recetas").document(docId).update(
-                    mapOf(
-                        "valoracionPromedio" to valoracionPromedio,
-                        "cantidadValoraciones" to cantidadValoraciones
-                    )
-                ).await()
-            }
-        } catch (e: Exception) {
-            Log.e("DatabaseHelper", "Error al actualizar valoración promedio: ${e.message}")
-            e.printStackTrace()
-        }
-    }
-    
     /**
      * Verifica si el usuario ya ha comentado una receta
      * 

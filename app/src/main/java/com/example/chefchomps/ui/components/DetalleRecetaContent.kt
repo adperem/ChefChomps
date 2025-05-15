@@ -114,22 +114,6 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.weight(1f)
                 )
-                
-                // Mostrar valoración promedio con estrellas solo si hay valoración
-                if (recipe.valoracionPromedio != null && recipe.valoracionPromedio > 0 && (recipe.cantidadValoraciones ?: 0) > 0) {
-                    Text(
-                        text = String.format("%.1f", recipe.valoracionPromedio),
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Bold
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    RatingBar(rating = recipe.valoracionPromedio.toFloat(), modifier = Modifier.height(24.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = "(${recipe.cantidadValoraciones})",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
             }
             
             Spacer(modifier = Modifier.height(8.dp))

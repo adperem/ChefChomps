@@ -1,10 +1,8 @@
 package com.example.chefchomps.ui.components
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +19,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,7 +43,6 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -306,6 +302,10 @@ fun DetalleRecetaContent(recipe: Recipe, modifier: Modifier = Modifier) {
     }
 }
 
+/**
+ * Componente reutilizable para hacer un comentario
+ * @param onSubmit funcion que se ejecuta cuando se envia el comentario
+ */
 @Composable
 fun ComentarioForm(onSubmit: (String, Int) -> Unit) {
     var texto by remember { mutableStateOf("") }
@@ -377,6 +377,12 @@ fun ComentarioForm(onSubmit: (String, Int) -> Unit) {
     }
 }
 
+/**
+ * Componente reutilizable para ver un comentario
+ * @param comentario comentario a mostrar
+ * @param esPropio boolean true si es uno hecho por ti, false en caso contrario
+ * @param onDelete si esPropio permite borrar el comentario, sino no
+ */
 @Composable
 fun ComentarioItem(
     comentario: Comentario,
@@ -473,6 +479,10 @@ fun ComentarioItem(
     }
 }
 
+/**
+ * Componente reutilizable para mostrar número de estrellas
+ * @param rating puntuación que se muestra en número de estrellas hasta un másximo de 5
+ */
 @Composable
 fun RatingBar(
     rating: Float,
@@ -509,6 +519,10 @@ fun RatingBar(
     }
 }
 
+/**
+ * Clase para mostrar parcialmente una estrella
+ * @param fraction define cuanto espacio se tapa.
+ */
 // Clase de forma personalizada para recortar la estrella
 private class ClipShape(private val fraction: Float) : Shape {
     override fun createOutline(
@@ -529,6 +543,8 @@ private class ClipShape(private val fraction: Float) : Shape {
 
 /**
  * Componente para mostrar texto HTML en Compose
+ * @param html texto html
+ * @param style Estilo que se muestra el texto
  */
 @Composable
 fun HtmlText(
@@ -545,6 +561,7 @@ fun HtmlText(
 
 /**
  * Función para formatear etiquetas HTML específicas
+ * @param html texto html que se formatea para ser texto plano
  */
 private fun formatHtmlTags(html: String): String {
     var result = html
@@ -603,6 +620,7 @@ private fun formatHtmlTags(html: String): String {
 
 /**
  * Procesa listas HTML (ordenadas y desordenadas)
+ * @param html texto html sobre tabla a transformar a String
  */
 private fun processLists(html: String): String {
     var result = html
@@ -626,6 +644,8 @@ private fun processLists(html: String): String {
 
 /**
  * Procesa los elementos de una lista
+ * @param listContent texto html sobre listas a transformar a String
+ * @param isOrdered booleano si esta ordenado true en caso contrario false
  */
 private fun processListItems(listContent: String, isOrdered: Boolean): String {
     val liPattern = Regex("<li>(.*?)</li>", RegexOption.DOT_MATCHES_ALL)

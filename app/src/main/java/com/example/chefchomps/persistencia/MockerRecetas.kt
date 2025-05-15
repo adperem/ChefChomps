@@ -5,6 +5,10 @@ import com.example.chefchomps.model.Ingredient
 import com.example.chefchomps.model.Instruction
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.model.Step
+
+/**
+ * Datos falsos para no gastar llamadas a la API, ya no funciona
+ */
 class MockerRecetas (
 ){
     companion object{

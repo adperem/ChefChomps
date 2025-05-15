@@ -1,6 +1,5 @@
 package com.example.chefchomps.ui
 
-import ChefChompsTema
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
@@ -38,7 +37,6 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.ApiCLient
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.ui.components.DetalleRecetaContent
-import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -73,7 +71,7 @@ class PaginaDetalle : ComponentActivity() {
         }
         
         setContent {
-            ChefChompsTema(darkTheme = false) {
+            ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     if (recetaFromJson != null) {
                         // Si la receta viene de Firebase como JSON, la mostramos directamente

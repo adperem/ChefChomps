@@ -86,7 +86,9 @@ class PaginaPrincipal : ComponentActivity() {
             ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     PaginaPrincipal(
-                        onThemeChange = { ThemeManager.setDarkTheme(it, this) }
+                        onThemeChange = { enabled ->
+                            ThemeManager.setDarkTheme(enabled, this)
+                        }
                     )
                 }
             }
@@ -113,6 +115,7 @@ class PaginaPrincipal : ComponentActivity() {
         var showMenu by remember { mutableStateOf(false) }
         var showProfile by remember { mutableStateOf(false) }
         val profileViewModel = remember { ProfileViewModel() }
+        val darkTheme by LocalDarkTheme.current
 
         var searchText by remember { mutableStateOf("") }
         var isSearching by remember { mutableStateOf(false) }
@@ -233,12 +236,12 @@ class PaginaPrincipal : ComponentActivity() {
                                 text = {
                                     LabeledMaterialSwitch(
                                         checked = darkTheme,
-                                        onCheckedChange = { 
-                                            onThemeChange(it)
+                                        onCheckedChange = { checked ->
+                                            onThemeChange(checked)
                                             showMenu = false
                                         },
                                         label = if (darkTheme) "Modo Claro" else "Modo Oscuro",
-                                        modifier = Modifier.fillMaxWidth()
+                                        modifier = Modifier.weight(1f)
                                     )
                                 },
                                 onClick = {

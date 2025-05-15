@@ -1,7 +1,5 @@
 
-import android.content.Context
 import android.os.Build
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -13,7 +11,6 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -26,36 +23,15 @@ private val DarkColorScheme = darkColorScheme(
 
 private val LightColorScheme = lightColorScheme(
     primary = Color(0xCCCCCCCC)
-
 )
-private const val PREFS_NAME = "ChefChompsPrefs"
-private const val KEY_DARK_THEME = "dark_theme"
-
-@Composable
-private fun isDarkTheme(context: Context): Boolean {
-    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    return prefs.getBoolean(KEY_DARK_THEME, isSystemInDarkTheme())
-}
-
-private fun saveDarkTheme(context: Context, isDark: Boolean) {
-    val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-    with(prefs.edit()) {
-        putBoolean(KEY_DARK_THEME, isDark)
-        apply()
-    }
-}
 
 @Composable
 fun ChefChompsTema(
-    darkTheme: Boolean = isDarkTheme(LocalContext.current),
+    darkTheme: Boolean,
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
     val context = LocalContext.current
-    LaunchedEffect(darkTheme) {
-        saveDarkTheme(context, darkTheme)
-    }
-
     val colorScheme = when {
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)

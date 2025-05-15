@@ -1,6 +1,5 @@
 package com.example.chefchomps.ui
 
-import ChefChompsTema
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -29,14 +28,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.chefchomps.R
 import com.example.chefchomps.model.Recipe
 import com.example.chefchomps.ui.components.DetalleRecetaContent
 import com.google.gson.Gson
@@ -62,7 +57,7 @@ class VerReceta : ComponentActivity() {
         }
         
         setContent {
-            ChefChompsTema(darkTheme = false) {
+            ChefChompsAppTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     VerRecetaScreen(
                         receta = receta,

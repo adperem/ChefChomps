@@ -1,8 +1,8 @@
-// ThemeManager.kt
 package com.example.chefchomps.ui
 
 import ChefChompsTema
 import android.content.Context
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
@@ -26,6 +26,9 @@ object ThemeManager {
             .edit()
             .putBoolean(KEY_DARK_THEME, enabled)
             .apply()
+        AppCompatDelegate.setDefaultNightMode(
+            if (enabled) AppCompatDelegate.MODE_NIGHT_YES else AppCompatDelegate.MODE_NIGHT_NO
+        )
     }
 
     val isDarkTheme = mutableStateOf(false)

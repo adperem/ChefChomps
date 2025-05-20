@@ -96,6 +96,7 @@ class PaginaPrincipal : ComponentActivity() {
 
     /**
      * Pagina de inicio para la aplicacion
+     *
      * @param modifier modificador que define comportamiento
      * @param uiState contiene todos los datos relacionados con la página principal
      * */

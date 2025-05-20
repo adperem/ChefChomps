@@ -77,7 +77,13 @@ class MisRecetasActivity : ComponentActivity() {
     // Variable para mantener la lista de recetas
     private val misRecetasState = mutableStateOf<List<Recipe>>(emptyList())
     private val databaseHelper = DatabaseHelper()
-    
+
+    /**
+     * Método de inicialización de la actividad.
+     * Lee la preferencia del tema (claro/oscuro), carga las recetas y establece el contenido de la UI con Compose.
+     *
+     * También gestiona la navegación a la actividad de edición de recetas.
+     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
@@ -123,7 +129,12 @@ class MisRecetasActivity : ComponentActivity() {
             }
         }
     }
-    
+
+    /**
+     * Elimina una receta de la base de datos y actualiza el estado si la operación es exitosa.
+     *
+     * @param receta La receta que se desea eliminar.
+     */
     @OptIn(DelicateCoroutinesApi::class)
     private fun eliminarReceta(receta: Recipe) {
         if (receta.id == null) return
@@ -140,7 +151,15 @@ class MisRecetasActivity : ComponentActivity() {
             }
         }
     }
-    
+
+    /**
+     * Maneja el resultado de la actividad de edición o creación de receta.
+     * Si se recibe un código de resultado exitoso, se recarga la lista de recetas.
+     *
+     * @param requestCode Código que identifica la solicitud.
+     * @param resultCode Código que indica si la operación fue exitosa.
+     * @param data Datos devueltos por la actividad.
+     */
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (requestCode == EDIT_RECIPE_REQUEST_CODE && resultCode == RESULT_OK) {
@@ -150,6 +169,15 @@ class MisRecetasActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Composable que representa la interfaz de usuario de la pantalla "Mis Recetas".
+ * Muestra un listado de recetas, un botón flotante para crear una nueva, y diálogo de confirmación para eliminar.
+ *
+ * @param recetas Lista de recetas del usuario.
+ * @param onBack Función que se ejecuta al pulsar el botón de volver.
+ * @param onEdit Función que se ejecuta al pulsar el botón de editar una receta.
+ * @param onDelete Función que se ejecuta para eliminar una receta seleccionada.
+ */
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
 fun MisRecetasScreen(
@@ -294,6 +322,15 @@ fun MisRecetasScreen(
     }
 }
 
+/**
+ * Composable que representa una tarjeta individual de receta.
+ * Muestra la imagen, el título, y botones de edición y eliminación.
+ *
+ * @param receta Objeto que contiene los datos de la receta.
+ * @param onClick Acción al pulsar sobre la tarjeta (navegar a detalles).
+ * @param onEdit Acción al pulsar el botón de editar.
+ * @param onDelete Acción al pulsar el botón de eliminar.
+ */
 @Composable
 fun RecetaCard(
     receta: Recipe,

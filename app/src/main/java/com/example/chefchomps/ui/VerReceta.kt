@@ -81,6 +81,7 @@ class VerReceta : ComponentActivity() {
 
 /***
  * Componible reusabke para poder ver una receta
+ *
  * @param receta receta a ser mostrada
  * @param onBack una funcion que se ejecuta cuando se hace click a la fecha ←
  * @param onContinuar una funcion que se ejecuta cuando se hace click a la Continuar

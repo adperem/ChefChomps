@@ -100,6 +100,7 @@ class NuevaReceta : ComponentActivity() {
         }
     }
 }
+
 /**
  * Componible reusable para poder crear nuevas recetas
  */

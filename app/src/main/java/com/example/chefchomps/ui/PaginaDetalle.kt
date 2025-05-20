@@ -40,6 +40,9 @@ import com.example.chefchomps.ui.components.DetalleRecetaContent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+/**
+ * Actividad para mostrar el detalle completo de una receta
+ */
 class PaginaDetalle : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,6 +98,12 @@ class PaginaDetalle : ComponentActivity() {
     }
 }
 
+/**
+ * Muestra el detalle de una receta obtenida de Firebase
+ *
+ * @param receta Objeto Recipe completo desde Firebase
+ * @param modifier Modificador Compose para personalizar el layout
+ */
 @Composable
 fun PaginaDetalleFirebase(
     receta: Recipe,
@@ -111,6 +120,14 @@ fun PaginaDetalleFirebase(
     }
 }
 
+/**
+ * Muestra el detalle de una receta obtenida de la API
+ *
+ * @param recetaId ID de la receta para buscar en la API
+ * @param titulo Título de la receta (opcional, para mostrar datos básicos si falla la API)
+ * @param imagen URL de la imagen (opcional)
+ * @param modifier Modificador Compose para personalizar el layout
+ */
 @Composable
 fun PaginaDetalle(
     recetaId: Int,

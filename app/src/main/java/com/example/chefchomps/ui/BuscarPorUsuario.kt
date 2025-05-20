@@ -69,6 +69,9 @@ import kotlinx.coroutines.runBlocking
 private const val PREFS_NAME = "ChefChompsPrefs"
 private const val KEY_DARK_THEME = "dark_theme"
 
+/**
+ * Actividad principal para la búsqueda por usuario
+ */
 class BuscarPorUsuario : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +90,11 @@ class BuscarPorUsuario : ComponentActivity() {
     }
 }
 
+/**
+ * Pantalla composable para buscar recetas por usuario
+ *
+ * @param onBack Callback para volver atrás
+ */
 @OptIn(ExperimentalMaterial3Api::class, DelicateCoroutinesApi::class)
 @Composable
 fun BuscarPorUsuarioScreen(onBack: () -> Unit) {

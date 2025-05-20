@@ -37,8 +37,9 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.DatabaseHelper
 import com.example.chefchomps.logica.DatabaseHelper.RegistroResultado
 import kotlinx.coroutines.launch
+
 /**
- * Clase la funcion para registrar un usuario
+ * Clase para la funcion de registrar un usuario
  */
 class RegistroActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -60,6 +61,7 @@ class RegistroActivity : ComponentActivity() {
 
 /**
  * Componible reusable para registrar un usuario
+ *
  * @param showToast Funcion que se usa para poder ver mensajes
  * @param onBack funcion que se ejecuta cuando se hace click al icono ←
  */

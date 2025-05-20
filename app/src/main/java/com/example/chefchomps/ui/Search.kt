@@ -77,6 +77,7 @@ class Search :ComponentActivity(){
 
     /***
      * Busca por una lista de string
+     *
      * @param uiState modificador que define comportamiento (opcional)
      * @param funcion una funcion que recibe una lista de string(ingredientes) y devuelve lista de recetas (opcional)
      */

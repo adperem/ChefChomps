@@ -42,6 +42,9 @@ import com.example.chefchomps.R
 import com.example.chefchomps.logica.DatabaseHelper
 import kotlinx.coroutines.launch
 
+/**
+ * Actividad para el proceso de recuperación de contraseña
+ */
 class PasswordResetActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -65,6 +68,12 @@ class PasswordResetActivity : ComponentActivity() {
     }
 }
 
+/**
+ * Pantalla composable para recuperación de contraseña
+ *
+ * @param onBack Callback para volver atrás
+ * @param onSuccess Callback al completar el proceso exitosamente
+ */
 @Composable
 fun PasswordResetScreen(onBack: () -> Unit, onSuccess: () -> Unit) {
     var email by remember { mutableStateOf("") }
